@@ -1,0 +1,169 @@
+---
+title: Installation
+description: Download and install Bulk Crap Uninstaller on your Windows system
+---
+
+# Installing Bulk Crap Uninstaller
+
+BCU offers multiple installation options to suit different needs. Choose the version that works best for your situation.
+
+## Download Options
+
+BCU is available in three different variants:
+
+<CardGroup cols={3}>
+  <Card title="Setup" icon="box">
+    Traditional installer that sets up BCU as a normal application. Automatically installs .NET runtime if needed.
+  </Card>
+  
+  <Card title="Portable" icon="briefcase">
+    Self-contained version with bundled .NET runtime. No installation required. Larger file size.
+  </Card>
+  
+  <Card title="net" icon="feather">
+    Standalone portable version requiring separate .NET runtime installation. Smallest file size.
+  </Card>
+</CardGroup>
+
+### Which Version Should I Choose?
+
+<CodeGroup>
+```text Setup Version
+✓ Best for: Permanent installation on your PC
+✓ File size: Medium
+✓ Requires: Internet connection for .NET runtime (if not installed)
+✓ Benefits: Auto-updates, integrated with Windows
+```
+
+```text Portable Version
+✓ Best for: USB drives, temporary use, no admin rights
+✓ File size: Large (~100MB+)
+✓ Requires: Nothing - completely self-contained
+✓ Benefits: No installation, works anywhere, includes runtime
+```
+
+```text net Version
+✓ Best for: Users with .NET runtime already installed
+✓ File size: Small (~10MB)
+✓ Requires: .NET runtime pre-installed
+✓ Benefits: Smallest download, portable
+```
+</CodeGroup>
+
+## Download Sources
+
+You can download BCU from several trusted sources:
+
+<CardGroup cols={3}>
+  <Card title="GitHub Releases" icon="github" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/releases">
+    Official releases page with all versions
+  </Card>
+  
+  <Card title="FossHub" icon="download" href="https://www.fosshub.com/Bulk-Crap-Uninstaller.html">
+    Mirror hosting site for open-source software
+  </Card>
+  
+  <Card title="SourceForge" icon="cloud-arrow-down" href="https://sourceforge.net/projects/bulk-crap-uninstaller/">
+    Alternative download mirror
+  </Card>
+</CardGroup>
+
+<Info>
+  All download sources provide the same official releases. Choose whichever is most convenient for you.
+</Info>
+
+## Installation Instructions
+
+### Setup Version
+
+<Steps>
+  <Step title="Download the installer">
+    Download the Setup version from one of the sources above. Look for a file named similar to `BCUninstaller_X.X_setup.exe`.
+  </Step>
+  
+  <Step title="Run the installer">
+    Double-click the downloaded file to launch the installation wizard.
+  </Step>
+  
+  <Step title="Follow the wizard">
+    Follow the on-screen instructions. The installer will automatically check for and install the required .NET runtime if it's not already present on your system.
+  </Step>
+  
+  <Step title="Complete installation">
+    Once complete, BCU will be installed and ready to use. You can launch it from the Start menu or desktop shortcut.
+  </Step>
+</Steps>
+
+<Note>
+  The Setup version may require an internet connection to download the .NET runtime if it's not already installed on your system.
+</Note>
+
+### Portable Version
+
+<Steps>
+  <Step title="Download the portable archive">
+    Download the Portable version. Look for a file named similar to `BCUninstaller_X.X_portable.zip`.
+  </Step>
+  
+  <Step title="Extract the archive">
+    Extract the ZIP file to your desired location (e.g., a folder on your desktop, USB drive, or any other location).
+  </Step>
+  
+  <Step title="Run BCUninstaller">
+    Navigate to the extracted folder and double-click `BCUninstaller.exe` to launch the application.
+  </Step>
+</Steps>
+
+<Info>
+  The Portable version is self-contained and requires no installation. All settings are stored in the application folder, making it perfect for portable use.
+</Info>
+
+### net Version
+
+<Steps>
+  <Step title="Ensure .NET runtime is installed">
+    Before downloading, make sure you have the appropriate .NET runtime installed. See [System Requirements](/system-requirements) for details.
+  </Step>
+  
+  <Step title="Download the net archive">
+    Download the net version. Look for a file named similar to `BCUninstaller_X.X_net.zip`.
+  </Step>
+  
+  <Step title="Extract the archive">
+    Extract the ZIP file to your desired location.
+  </Step>
+  
+  <Step title="Run BCUninstaller">
+    Navigate to the extracted folder and double-click `BCUninstaller.exe` to launch the application.
+  </Step>
+</Steps>
+
+<Warning>
+  If you get a framework error when launching the net version, you need to install the appropriate .NET runtime. See [System Requirements](/system-requirements) for installation instructions.
+</Warning>
+
+## Nightly Builds
+
+If you want to test the latest features and fixes before they're officially released, you can download nightly builds:
+
+<Card title="GitHub Actions" icon="flask" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/actions/workflows/ci.yaml">
+  Download automated builds from the continuous integration pipeline
+</Card>
+
+<Warning>
+  Nightly builds are development versions and may contain bugs or incomplete features. Use them at your own risk and only if you want to help test new functionality.
+</Warning>
+
+## Next Steps
+
+After installation, you're ready to start using BCU:
+
+<CardGroup cols={2}>
+  <Card title="Interface Overview" icon="rocket" href="/guide/interface-overview">
+    Learn how to use the BCU interface
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/guide/settings-configuration">
+    Customize BCU settings to your preferences
+  </Card>
+</CardGroup>

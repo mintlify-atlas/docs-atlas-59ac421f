@@ -1,0 +1,242 @@
+---
+title: System Requirements
+description: Hardware and software requirements for running Bulk Crap Uninstaller
+---
+
+# System Requirements
+
+BCU has different requirements depending on which version you're using. Make sure your system meets the necessary requirements before installation.
+
+## Overview by Version
+
+BCU has evolved through several major versions, each with different system requirements:
+
+<CardGroup cols={3}>
+  <Card title="BCU v6" icon="6">
+    Latest version with modern .NET 8 runtime
+  </Card>
+  
+  <Card title="BCU v5" icon="5">
+    Previous stable release with .NET 6 runtime
+  </Card>
+  
+  <Card title="BCU v1-v4" icon="4">
+    Legacy versions for older systems
+  </Card>
+</CardGroup>
+
+## BCUninstaller v6 (Current)
+
+The latest version of BCU with the most recent features and improvements.
+
+### Operating System Requirements
+
+<Info>
+  **Minimum:** Windows 10 or later
+  
+  While officially supporting Windows 10 and later, BCU v6 may also work on Windows 7, though this is not officially supported or tested.
+</Info>
+
+### Runtime Requirements
+
+<CodeGroup>
+```text Setup Version
+No manual installation required
+The installer automatically downloads and installs
+the .NET 8 desktop runtime if needed
+```
+
+```text Portable Version
+No runtime installation required
+The .NET 8 runtime is bundled with the application
+Ready to run immediately after extraction
+```
+
+```text net Version
+Requires .NET 8 desktop runtime
+Must be installed manually before running BCU
+```
+</CodeGroup>
+
+### Installing .NET 8 Desktop Runtime
+
+If you're using the **net** version, you need to install the .NET 8 desktop runtime:
+
+<Steps>
+  <Step title="Download the runtime">
+    Visit the [.NET 8 download page](https://dotnet.microsoft.com/download/dotnet/8.0) and download the **.NET Desktop Runtime 8.0**.
+  </Step>
+  
+  <Step title="Run the installer">
+    Execute the downloaded installer and follow the on-screen instructions.
+  </Step>
+  
+  <Step title="Verify installation">
+    After installation, you can verify by opening a command prompt and running:
+    ```bash
+    dotnet --list-runtimes
+    ```
+    You should see `Microsoft.WindowsDesktop.App 8.0.x` in the output.
+  </Step>
+</Steps>
+
+### Platform Support
+
+<Note>
+  **Important:** BCU v6 no longer includes x86 (32-bit) builds by default, since none of the officially supported Windows versions require x86-only support.
+  
+  If you need an x86 build, you can use the AnyCPU build or compile it yourself from source.
+</Note>
+
+Supported platforms:
+- **x64** (64-bit Intel/AMD) - Primary platform
+- **ARM64** - For ARM-based Windows devices
+- **AnyCPU** - Universal build that runs on any platform
+
+## BCUninstaller v5
+
+The previous stable release, recommended for systems that cannot upgrade to v6.
+
+### Operating System Requirements
+
+<Info>
+  **Minimum:** Windows 7 SP1 with Platform Updates
+  
+  Required updates:
+  - KB2670838 (Platform Update)
+  - KB2533623 (Microsoft Security Advisory 2533623)
+  - All available Windows Updates
+</Info>
+
+### Runtime Requirements
+
+- **Setup/net versions:** .NET 6 desktop runtime required
+- **Portable version:** No runtime needed (bundled)
+
+### Installing .NET 6 Desktop Runtime
+
+<Steps>
+  <Step title="Update Windows">
+    Run Windows Update to ensure all system updates are installed. The .NET 6 runtime may be available through Windows Update.
+  </Step>
+  
+  <Step title="Download manually if needed">
+    If Windows Update doesn't provide it, download the [.NET 6 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/6.0) manually.
+  </Step>
+  
+  <Step title="Install the runtime">
+    Run the installer and complete the installation.
+  </Step>
+</Steps>
+
+### Download BCU v5
+
+<Card title="Download v5.9" icon="download" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/releases/tag/v5.9">
+  Get the latest BCUninstaller 5.x release from GitHub
+</Card>
+
+<Warning>
+  If you encounter DLL errors on startup, run Windows Update to install all available updates. If you get a framework error, install .NET 6 either manually or through Windows Update.
+</Warning>
+
+## BCUninstaller v1 - v4 (Legacy)
+
+Legacy versions for older Windows systems including Windows XP.
+
+### Operating System Requirements
+
+<Info>
+  **Minimum:** Windows XP or later
+  
+  Note: Windows XP support may be unreliable in later v4 releases.
+</Info>
+
+### Runtime Requirements
+
+- **.NET Framework 4.5** (primary requirement)
+- Some versions can run on **.NET Framework 3.5** with reduced functionality
+
+<Note>
+  Windows XP does not include .NET Framework 4.5 by default. You must download and install it manually along with all available updates.
+</Note>
+
+### Getting BCU v4
+
+<CardGroup cols={2}>
+  <Card title="Download v4.16" icon="download" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/releases/tag/v4.16">
+    Latest pre-built v4 release
+  </Card>
+  
+  <Card title="Compile from Source" icon="code" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/tree/legacy-4.x">
+    Build from the legacy 4.x branch
+  </Card>
+</CardGroup>
+
+## Hardware Requirements
+
+BCU has minimal hardware requirements:
+
+- **Processor:** Any processor capable of running the supported Windows version
+- **RAM:** 256 MB minimum, 512 MB or more recommended
+- **Disk Space:** 
+  - Setup version: ~50 MB
+  - Portable version: ~100-150 MB
+  - net version: ~10-20 MB
+- **Display:** Minimum 800x600 resolution
+
+## Version Comparison Table
+
+| Feature | v6 | v5 | v1-v4 |
+|---------|----|----|-------|
+| **Minimum OS** | Windows 10 | Windows 7 SP1 | Windows XP |
+| **Runtime** | .NET 8 | .NET 6 | .NET Framework 4.5 |
+| **x86 Support** | AnyCPU only | Yes | Yes |
+| **ARM64 Support** | Yes | No | No |
+| **Status** | Current | Previous | Legacy |
+
+## Choosing the Right Version
+
+<Steps>
+  <Step title="Check your Windows version">
+    Press `Win + R`, type `winver`, and press Enter to see your Windows version.
+  </Step>
+  
+  <Step title="Select appropriate BCU version">
+    - **Windows 10 or later:** Use BCU v6 (recommended)
+    - **Windows 7 or 8.1:** Use BCU v5
+    - **Windows XP or Vista:** Use BCU v4 (legacy)
+  </Step>
+  
+  <Step title="Choose installation type">
+    - **Portable version:** If you don't want to install runtimes or need portability
+    - **Setup version:** For permanent installation with automatic runtime setup
+    - **net version:** If you already have the required runtime installed
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### DLL Errors on Startup
+
+If you encounter DLL errors when starting BCU:
+
+1. Run Windows Update and install all available updates
+2. Restart your computer
+3. Try running BCU again
+
+### Framework Errors
+
+If you get a .NET Framework or runtime error:
+
+1. Check which version of BCU you're running
+2. Install the corresponding runtime:
+   - BCU v6: .NET 8 Desktop Runtime
+   - BCU v5: .NET 6 Desktop Runtime  
+   - BCU v4: .NET Framework 4.5
+3. Alternatively, use the Portable version which includes the runtime
+
+### Still Having Issues?
+
+<Card title="Get Help" icon="life-ring" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/issues">
+  Report issues or ask questions on GitHub
+</Card>

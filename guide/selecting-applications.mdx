@@ -1,0 +1,304 @@
+---
+title: Selecting Applications
+description: How to select, filter, sort, and search for applications
+---
+
+Efficiently finding and selecting the right applications is key to using Bulk Crap Uninstaller effectively. This guide covers all selection, filtering, and search capabilities.
+
+## Selection Methods
+
+### Single Selection
+
+Click any application in the list to select it. The selected application is highlighted, and you can:
+- View its properties
+- Perform operations on it
+- See details in the properties panel (when enabled)
+
+### Multiple Selection
+
+Select multiple applications using standard Windows selection methods:
+
+- **Ctrl+Click** - Add individual applications to selection
+- **Shift+Click** - Select a range from last selection to clicked item
+- **Ctrl+A** - Select all visible applications
+- **Toolbar buttons** - Use Select All, Select None, or Invert Selection
+
+<Tip>
+When many applications are selected, the status bar shows the total count and combined size of selected items.
+</Tip>
+
+### Checkbox Mode
+
+For easier batch selection, enable checkbox mode:
+
+1. Go to **Settings > Display**
+2. Enable **Use checkboxes for selection**
+3. Check boxes next to applications you want to select
+
+Checkbox mode is particularly useful when:
+- Selecting many non-contiguous applications
+- Building a selection list over time
+- Working with filtered views
+
+## Searching Applications
+
+### Quick Search
+
+The search box in the settings sidebar provides instant filtering:
+
+1. Press **F3** or **Ctrl+F** to focus the search box
+2. Type any part of the application name, publisher, or other fields
+3. The list updates in real-time to show matching applications
+
+<Note>
+Search is case-insensitive and searches across multiple fields including name, publisher, version, and install location.
+</Note>
+
+### Search Operators
+
+The search box supports different comparison methods:
+
+- **Contains** - Default, finds partial matches ("fire" matches "Firefox")
+- **Starts with** - Matches beginning of field ("Moz" matches "Mozilla Firefox")
+- **Equals** - Exact match only
+- **Regex** - Use regular expressions for complex patterns
+
+Change the search method using the dropdown next to the search box.
+
+### Advanced Search Examples
+
+Using regex mode, you can create powerful search patterns:
+
+```regex
+^(Adobe|Autodesk)  # Applications starting with Adobe or Autodesk
+\d{4}$             # Applications ending with a 4-digit year
+(?i)microsoft      # Case-insensitive search for Microsoft
+```
+
+## Filtering Applications
+
+Filters help you focus on specific types of applications.
+
+### Basic Filters
+
+Located in the settings sidebar and View menu:
+
+- **Hide Microsoft** - Hide applications published by Microsoft
+- **Show Updates** - Display Windows updates
+- **Show System Components** - Display system components
+- **Show Protected** - Display protected applications
+- **Show Store Apps** - Display Microsoft Store applications
+- **Show Windows Features** - Display Windows Features
+- **Show Tweaks** - Display registry tweaks and configurations
+
+<Warning>
+System components and protected applications are typically essential for Windows. Only modify them if you understand the consequences.
+</Warning>
+
+### Display Filters
+
+Control which application types are visible:
+
+1. Open the settings sidebar (View > Display Settings Panel)
+2. Check or uncheck filter options
+3. The list updates immediately
+
+**Common filter combinations:**
+
+<CardGroup cols={2}>
+  <Card title="User Applications Only" icon="user">
+    - Hide Microsoft: On
+    - Show Updates: Off
+    - Show System Components: Off
+    - Show Protected: Off
+  </Card>
+  
+  <Card title="Everything" icon="list">
+    Enable all "Show" options to see every installed component including system items.
+  </Card>
+  
+  <Card title="Large Applications" icon="hard-drive">
+    Sort by Size (descending) and use the tree map to identify space consumers.
+  </Card>
+  
+  <Card title="Recently Installed" icon="clock">
+    Sort by Install Date (descending) to see newest applications.
+  </Card>
+</CardGroup>
+
+### Advanced Filtering
+
+For complex filtering needs, create custom filter lists:
+
+1. Go to **File > Load Uninstaller List**
+2. Create a new list or load an existing one
+3. Define custom filter rules based on:
+   - Application properties
+   - Publisher information
+   - Installation location
+   - Certificate status
+   - Size criteria
+   - Install date ranges
+
+<Tip>
+Save frequently used filter combinations as list files for quick access.
+</Tip>
+
+## Sorting Applications
+
+### Column Sorting
+
+Click any column header to sort by that field:
+
+- **First click** - Sort ascending
+- **Second click** - Sort descending
+- **Third click** - Return to default sort
+
+The sorted column is indicated by an arrow showing sort direction.
+
+### Multi-level Sorting
+
+Applications are automatically sorted with a secondary sort:
+
+- Primary sort is the column you clicked
+- Secondary sort maintains alphabetical order within groups
+
+### Grouping
+
+Enable grouping to organize applications into categories:
+
+1. Go to **Settings > Display**
+2. Enable **Use groups**
+3. Applications are grouped by the primary sort column
+
+Groups can be collapsed/expanded by clicking the group header.
+
+<Note>
+Grouping is particularly useful when sorting by publisher, application type, or certificate status.
+</Note>
+
+## Intelligent Selection Strategies
+
+### Finding Orphaned Applications
+
+To find applications with missing uninstallers:
+
+1. Enable **Show Orphans** in settings
+2. The orphaned applications are highlighted in purple
+3. These often indicate incomplete uninstalls or manual installations
+
+### Identifying Large Applications
+
+To find disk space hogs:
+
+1. Click the **Size** column header to sort by size (descending)
+2. Enable the **Tree Map** view for visual representation
+3. Hover over rectangles to see application names and sizes
+
+### Finding Invalid Entries
+
+Invalid entries indicate problems:
+
+1. Enable **Test for invalid entries** in Settings > Advanced
+2. Enable **Show invalid entries** filter
+3. Invalid entries appear in red
+4. These can often be safely removed
+
+### Certificate Validation
+
+Check application authenticity:
+
+1. Enable **Test certificates** in Settings > Advanced
+2. Applications are color-coded:
+   - Green: Valid, trusted certificate
+   - Orange: No certificate or untrusted
+   - Red: Invalid or revoked certificate
+
+<Tip>
+Use the color legend (View > Show Color Legend) to understand the color coding while working.
+</Tip>
+
+## Selection Tips and Tricks
+
+### Selecting by Publisher
+
+1. Sort by **Publisher** column
+2. Enable **Grouping**
+3. Click the group header to select all applications from that publisher
+4. Or use Ctrl+Click to select multiple publishers
+
+### Excluding Specific Applications
+
+1. Select all applications (Ctrl+A)
+2. Ctrl+Click to deselect specific applications you want to keep
+3. Or use the **Invert Selection** button after selecting keepers
+
+### Working with Store Apps
+
+1. Enable **Show Store Apps** filter
+2. Store apps appear with blue highlighting
+3. These can be uninstalled or exported to PowerShell scripts
+
+### Finding Related Applications
+
+BCU can detect related applications:
+
+1. Select an application
+2. Start the uninstall process
+3. The wizard will suggest related applications to uninstall together
+4. This is based on publisher, install location, and naming patterns
+
+## Saving and Loading Selections
+
+### Export Application Lists
+
+Save your selection for later:
+
+1. Select the applications you want to export
+2. Go to **File > Export Selected**
+3. Choose a location and filename
+4. The list is saved as XML with full application details
+
+### Load Saved Lists
+
+Restore a previous selection:
+
+1. Go to **File > Load Uninstaller List**
+2. Browse to your saved list file
+3. The list loads and filters the view
+4. Matching applications are automatically selected
+
+<Note>
+Saved lists are portable - you can use them on different computers to identify and uninstall the same set of applications.
+</Note>
+
+## Keyboard Selection Shortcuts
+
+Speed up selection with keyboard commands:
+
+- **Ctrl+A** - Select all visible
+- **Up/Down arrows** - Navigate selection
+- **Shift+Up/Down** - Extend selection
+- **Ctrl+Space** - Toggle selection (in checkbox mode)
+- **Home/End** - Jump to first/last application
+- **Page Up/Down** - Scroll by page
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Start Broad, Narrow Down" icon="filter">
+    Begin with all applications visible, then apply filters progressively to focus on what you need.
+  </Card>
+  
+  <Card title="Use Multiple Views" icon="eye">
+    Switch between list view and tree map to get different perspectives on your applications.
+  </Card>
+  
+  <Card title="Save Common Filters" icon="floppy-disk">
+    Create and save filter lists for common tasks like "bloatware removal" or "outdated applications."
+  </Card>
+  
+  <Card title="Double-Check Selection" icon="check-double">
+    Always review your selection before performing bulk operations, especially with system components visible.
+  </Card>
+</CardGroup>

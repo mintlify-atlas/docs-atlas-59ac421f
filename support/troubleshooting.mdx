@@ -1,0 +1,184 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions for Bulk Crap Uninstaller"
+---
+
+## Common Issues
+
+### Installation Problems
+
+<AccordionGroup>
+  <Accordion title="Missing .NET Runtime Error">
+    BCUninstaller requires the appropriate .NET runtime for your version:
+    
+    **BCUninstaller v6:**
+    - Requires .NET 8 desktop runtime (not needed for portable version)
+    - Download from [Microsoft .NET Downloads](https://dotnet.microsoft.com/download/dotnet/8.0)
+    
+    **BCUninstaller v5:**
+    - Requires .NET 6 desktop runtime (not needed for portable version)
+    - Download from [Microsoft .NET Downloads](https://dotnet.microsoft.com/download/dotnet/6.0)
+    - Try running Windows Update if you get a framework error
+    
+    **BCUninstaller v1-v4:**
+    - Requires .NET Framework 4.5 with all available updates
+    - Not installed on Windows XP by default
+    
+    <Tip>The Portable version includes the runtime, so you don't need to install it separately.</Tip>
+  </Accordion>
+
+  <Accordion title="DLL Error on Startup">
+    If you encounter a DLL error when starting BCUninstaller:
+    
+    1. Run Windows Update to ensure your system has the latest patches
+    2. Install the required .NET runtime for your BCU version (see above)
+    3. For BCU v5 on Windows 7, ensure you have:
+       - Service Pack 1 installed
+       - Platform Updates (KB2670838, KB2533623)
+    
+    If the issue persists, try downloading the portable version which includes all dependencies.
+  </Accordion>
+
+  <Accordion title="Application Won't Start on Windows 7">
+    For Windows 7 users running BCUninstaller v5:
+    
+    **Required updates:**
+    - Windows 7 Service Pack 1
+    - Platform Update KB2670838
+    - Platform Update KB2533623
+    
+    Install these updates through Windows Update, then try running BCU again.
+    
+    <Note>Windows 7 support may be limited in newer versions. Consider using BCU v5.9 or earlier for best compatibility.</Note>
+  </Accordion>
+</AccordionGroup>
+
+### Runtime Errors
+
+<AccordionGroup>
+  <Accordion title="Application Crashes or Freezes">
+    If BCUninstaller crashes or becomes unresponsive:
+    
+    1. **Check system requirements** - Ensure your OS meets the minimum requirements
+    2. **Run as Administrator** - Right-click BCU and select "Run as administrator"
+    3. **Check for conflicts** - Close other uninstaller or system optimization tools
+    4. **Review error logs** - Check the BCU installation folder for log files
+    5. **Try portable version** - Use the standalone portable version to rule out installation issues
+    
+    If crashes persist, please [report the issue on GitHub](https://github.com/Klocman/Bulk-Crap-Uninstaller/issues/new) with:
+    - Your Windows version
+    - BCU version
+    - Steps to reproduce the crash
+    - Any error messages or log files
+  </Accordion>
+
+  <Accordion title="Uninstall Process Fails">
+    When an uninstall operation fails:
+    
+    **Common causes:**
+    - Application is currently running (close all instances)
+    - Insufficient permissions (run BCU as administrator)
+    - Corrupted uninstaller (may need manual removal)
+    - Protected system component
+    
+    **Solutions:**
+    1. Close the application you're trying to uninstall
+    2. Run BCU with administrator privileges
+    3. Try using the "Force uninstall" option for stubborn applications
+    4. Check the detailed error message in BCU's log
+    
+    <Warning>Be careful when force-uninstalling applications, as this may leave some files or registry entries behind.</Warning>
+  </Accordion>
+
+  <Accordion title="Windows Store Apps Not Detected">
+    If Windows Store apps aren't showing up in BCU:
+    
+    1. Ensure you're running BCU as Administrator
+    2. Check that Windows Store app support is enabled in BCU settings
+    3. Refresh the application list (F5)
+    4. Verify that the apps are actually installed (check Windows Settings)
+    
+    BCU is fully compatible with Windows Store Apps, but may need elevated permissions to detect them.
+  </Accordion>
+</AccordionGroup>
+
+### Performance Issues
+
+<AccordionGroup>
+  <Accordion title="Slow Startup or Application List Loading">
+    If BCU takes a long time to start or load the application list:
+    
+    **Optimization tips:**
+    - Disable automatic orphan detection if you don't need it
+    - Exclude certain application types from scanning (e.g., Windows components)
+    - Close other resource-intensive applications
+    - Ensure your antivirus isn't scanning BCU excessively
+    
+    The initial scan can take longer on systems with many installed applications. Subsequent launches should be faster.
+  </Accordion>
+
+  <Accordion title="High Memory or CPU Usage">
+    BCU may use significant resources when:
+    - Scanning for installed applications
+    - Detecting orphaned entries
+    - Processing bulk uninstall operations
+    
+    This is normal behavior. If usage remains high when idle:
+    1. Restart BCU
+    2. Disable background scanning features
+    3. Check for malware or other system issues
+  </Accordion>
+</AccordionGroup>
+
+## Debugging
+
+### Enable Detailed Logging
+
+To help diagnose issues:
+
+1. Check the BCU installation directory for log files
+2. Look for error messages in the application's status bar
+3. Note any error codes or specific error messages
+4. Check Windows Event Viewer for related errors
+
+### Reporting Bugs
+
+Found a bug? Help improve BCU by reporting it:
+
+<Card title="Report an Issue" icon="bug" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/issues/new">
+  Open a new issue on GitHub with details about the problem
+</Card>
+
+**Include in your report:**
+- BCU version number
+- Windows version and edition
+- Steps to reproduce the issue
+- Expected vs. actual behavior
+- Any error messages or screenshots
+- Log files (if available)
+
+### Getting Help
+
+If you didn't find a solution here:
+
+<CardGroup cols={2}>
+  <Card title="Read the Manual" icon="book" href="https://htmlpreview.github.io/?https://github.com/Klocman/Bulk-Crap-Uninstaller/blob/master/doc/BCU_manual.html">
+    Check the comprehensive online documentation
+  </Card>
+  
+  <Card title="GitHub Issues" icon="github" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/issues">
+    Search existing issues or ask a question
+  </Card>
+  
+  <Card title="Discussions" icon="comments" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/discussions">
+    Join community discussions
+  </Card>
+  
+  <Card title="FAQ" icon="question" href="/support/faq">
+    Check frequently asked questions
+  </Card>
+</CardGroup>
+
+<Note>
+  BCUninstaller is an open-source project. Response times may vary depending on maintainer availability.
+</Note>

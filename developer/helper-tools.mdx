@@ -1,0 +1,406 @@
+---
+title: "Helper Tools"
+description: "Understanding BCU's helper applications for specialized uninstaller support"
+---
+
+Bulk Crap Uninstaller uses a modular architecture with specialized helper tools to handle different types of applications. These helper executables provide clean separation of concerns and enable BCU to work with various platform-specific technologies.
+
+## Architecture Overview
+
+Helper tools are small, focused executables that:
+
+- Run independently from the main BCU application
+- Communicate via command-line interface (CLI)
+- Output structured data (typically JSON or XML)
+- Can be used standalone in scripts
+- Provide isolation for platform-specific code
+
+<Info>
+  Helper tools enable BCU to interface with technologies that require separate runtime environments or elevated privileges.
+</Info>
+
+## Available Helper Tools
+
+<CardGroup cols={2}>
+  <Card title="SteamHelper" icon="steam">
+    Manages Steam game detection and uninstallation
+  </Card>
+  <Card title="StoreAppHelper" icon="microsoft">
+    Handles Windows Store app operations via PowerShell
+  </Card>
+  <Card title="WinUpdateHelper" icon="download">
+    Interfaces with Windows Update for update removal
+  </Card>
+  <Card title="OculusHelper" icon="vr-cardboard">
+    Manages Oculus VR application detection
+  </Card>
+  <Card title="ScriptHelper" icon="file-code">
+    Executes custom uninstall scripts
+  </Card>
+</CardGroup>
+
+## SteamHelper
+
+Handles all Steam-related operations including game detection, metadata extraction, and uninstallation.
+
+### Features
+
+<Accordion title="Game Detection">
+  - Locates Steam installation directory
+  - Parses `libraryfolders.vdf` to find all library locations
+  - Reads app manifest files (`appmanifest_*.acf`)
+  - Extracts game metadata (name, ID, size, install date)
+</Accordion>
+
+<Accordion title="Metadata Extraction">
+  - Game/app name and App ID
+  - Installation directory
+  - Size on disk
+  - Last update timestamp
+  - DLC and workshop content detection
+</Accordion>
+
+### Usage Example
+
+```bash Command Line
+SteamHelper.exe --list
+SteamHelper.exe --appid 730 --info
+SteamHelper.exe --uninstall 730
+```
+
+```json Output Format
+{
+  "appId": "730",
+  "name": "Counter-Strike: Global Offensive",
+  "installDir": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive",
+  "sizeOnDisk": "26843545600",
+  "lastUpdated": "1647532800"
+}
+```
+
+<Note>
+  SteamHelper requires the Steam client to be installed. It reads Steam's internal manifest files directly.
+</Note>
+
+## StoreAppHelper
+
+Provides interface to Windows Store (UWP) applications using PowerShell cmdlets.
+
+### Features
+
+<Accordion title="App Detection">
+  Uses PowerShell `Get-AppxPackage` cmdlet to query:
+  - All user packages
+  - System-wide packages
+  - Provisioned packages
+  - Package families
+</Accordion>
+
+<Accordion title="App Removal">
+  Uses `Remove-AppxPackage` cmdlet:
+  - Per-user removal
+  - All-users removal
+  - Provisioned package removal (prevents reinstallation)
+</Accordion>
+
+### Usage Example
+
+```powershell PowerShell Interface
+StoreAppHelper.exe --list
+StoreAppHelper.exe --package "Microsoft.WindowsCalculator" --info
+StoreAppHelper.exe --remove "Microsoft.WindowsCalculator_8wekyb3d8bbwe"
+```
+
+```json Output Format
+{
+  "name": "Microsoft.WindowsCalculator",
+  "packageFullName": "Microsoft.WindowsCalculator_10.2103.8.0_x64__8wekyb3d8bbwe",
+  "installLocation": "C:\\Program Files\\WindowsApps\\Microsoft.WindowsCalculator_10.2103.8.0_x64__8wekyb3d8bbwe",
+  "publisher": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+  "version": "10.2103.8.0",
+  "isFramework": false,
+  "isBundle": false,
+  "isResourcePackage": false
+}
+```
+
+<Warning>
+  Some Windows Store apps are protected and cannot be removed. StoreAppHelper will report an error for these.
+</Warning>
+
+## WinUpdateHelper
+
+Interfaces with Windows Update to list and remove installed updates.
+
+### Features
+
+<Accordion title="Update Detection">
+  Queries Windows Update database:
+  - Installed updates (KB articles)
+  - Update metadata (title, description, date)
+  - Update classification (security, feature, driver)
+  - Update size and installation date
+</Accordion>
+
+<Accordion title="Update Removal">
+  Uses WUSA or DISM to remove updates:
+  - Generates appropriate removal command
+  - Handles restart requirements
+  - Validates removal prerequisites
+</Accordion>
+
+### Usage Example
+
+```bash Command Line
+WinUpdateHelper.exe --list
+WinUpdateHelper.exe --kb KB5010342 --info
+WinUpdateHelper.exe --remove KB5010342
+```
+
+```bash Removal Command Generated
+wusa.exe /uninstall /kb:5010342 /quiet /norestart
+```
+
+<Warning>
+  Removing Windows Updates can destabilize the system. Only remove updates if you understand the implications.
+</Warning>
+
+## OculusHelper
+
+Manages Oculus VR application detection and metadata extraction.
+
+### Features
+
+<Accordion title="App Detection">
+  - Locates Oculus installation directory
+  - Parses Oculus manifest files
+  - Extracts VR application metadata
+  - Identifies installed DLC and add-ons
+</Accordion>
+
+<Accordion title="Metadata Extraction">
+  - Application name and Oculus ID
+  - Installation directory
+  - Size on disk
+  - Version information
+  - Required Oculus runtime version
+</Accordion>
+
+### Usage Example
+
+```bash Command Line
+OculusHelper.exe --list
+OculusHelper.exe --appid "1234567890" --info
+```
+
+<Note>
+  OculusHelper requires Oculus software to be installed. It reads Oculus library manifests directly.
+</Note>
+
+## ScriptHelper
+
+Executes custom uninstall scripts with sandboxing and logging.
+
+### Features
+
+<Accordion title="Script Execution">
+  - Runs PowerShell, batch, or VBScript files
+  - Provides sandboxed execution environment
+  - Captures output and exit codes
+  - Enforces timeout limits
+  - Logs all operations
+</Accordion>
+
+<Accordion title="Security Features">
+  - Script signature validation (optional)
+  - Execution policy enforcement
+  - Resource usage limits
+  - User confirmation for untrusted scripts
+</Accordion>
+
+### Usage Example
+
+```bash Command Line
+ScriptHelper.exe --script "uninstall.ps1" --timeout 300
+ScriptHelper.exe --script "cleanup.bat" --verbose
+```
+
+<Warning>
+  Always review scripts before execution. ScriptHelper can execute arbitrary code.
+</Warning>
+
+## Helper Communication Protocol
+
+All helpers follow a standard communication protocol:
+
+### Command-Line Interface
+
+```bash Standard Switches
+--list              List all detected items
+--info <id>         Get detailed information about specific item
+--remove <id>       Remove/uninstall specific item
+--version           Display helper version
+--help              Show usage information
+--verbose           Enable detailed logging
+--json              Output in JSON format (default)
+--xml               Output in XML format
+```
+
+### Exit Codes
+
+<Accordion title="Standard Exit Codes">
+  - `0` - Success
+  - `1` - Invalid arguments
+  - `2` - Item not found
+  - `3` - Permission denied
+  - `4` - Operation failed
+  - `5` - Timeout
+  - `13` - Unexpected error
+</Accordion>
+
+### Output Format
+
+All helpers output structured data:
+
+```json Standard JSON Structure
+{
+  "success": true,
+  "data": [
+    {
+      "id": "unique-identifier",
+      "name": "Application Name",
+      "metadata": {
+        // Helper-specific fields
+      }
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
+```
+
+## Integration with BCU
+
+BCU integrates helpers through factory classes:
+
+```csharp SteamFactory.cs Integration
+public class SteamFactory : IUninstallerFactory
+{
+    public IEnumerable<ApplicationUninstallerEntry> GetUninstallerEntries(
+        ListGenerationProgress progressCallback)
+    {
+        // Execute SteamHelper
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "SteamHelper.exe",
+            Arguments = "--list --json",
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        });
+        
+        // Parse JSON output
+        string output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        
+        var steamApps = JsonConvert.DeserializeObject<List<SteamApp>>(output);
+        
+        // Convert to ApplicationUninstallerEntry objects
+        return steamApps.Select(app => new ApplicationUninstallerEntry
+        {
+            DisplayName = app.Name,
+            UninstallString = $"steam://uninstall/{app.AppId}",
+            UninstallerKind = UninstallerType.Steam,
+            // ... other properties
+        });
+    }
+}
+```
+
+## Standalone Usage
+
+Helpers can be used independently of BCU:
+
+<Tabs>
+  <Tab title="PowerShell">
+    ```powershell Using Helpers in PowerShell
+    # List all Steam games
+    $games = SteamHelper.exe --list --json | ConvertFrom-Json
+    
+    # Display game information
+    foreach ($game in $games.data) {
+        Write-Host "$($game.name) - Size: $($game.sizeOnDisk)"
+    }
+    
+    # Uninstall a specific game
+    SteamHelper.exe --uninstall 730
+    ```
+  </Tab>
+  
+  <Tab title="Batch Script">
+    ```batch Using Helpers in Batch
+    @echo off
+    
+    REM List all Windows Store apps
+    StoreAppHelper.exe --list > apps.json
+    
+    REM Remove specific app
+    StoreAppHelper.exe --remove "Microsoft.BingWeather" --verbose
+    
+    if %ERRORLEVEL% EQU 0 (
+        echo Successfully removed app
+    ) else (
+        echo Failed to remove app: %ERRORLEVEL%
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## Building Helper Tools
+
+Helpers are built as part of the BCU solution:
+
+```bash Build Process
+# Build all helpers
+msbuild BulkCrapUninstaller.sln /t:SteamHelper;StoreAppHelper;WinUpdateHelper
+
+# Build specific helper
+msbuild source/SteamHelper/SteamHelper.csproj
+```
+
+<Note>
+  Helper tools are .NET console applications targeting the same framework as BCU.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Helper Not Found">
+    Ensure helper executables are in the same directory as BCUninstaller.exe or in the system PATH.
+  </Accordion>
+  
+  <Accordion title="Permission Denied">
+    Some helpers require administrator privileges. Run BCU as administrator.
+  </Accordion>
+  
+  <Accordion title="Timeout Errors">
+    Increase timeout values in BCU settings for slow operations (large Steam libraries, etc.).
+  </Accordion>
+  
+  <Accordion title="Invalid JSON Output">
+    Check helper logs in BCU's log directory for detailed error messages.
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Uninstaller Types" icon="list" href="/developer/uninstaller-types">
+    Learn about different installer systems BCU supports
+  </Card>
+  <Card title="Detection Methods" icon="magnifying-glass" href="/developer/detection-methods">
+    Understand how BCU discovers applications
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/developer/architecture">
+    Explore BCU's overall architecture
+  </Card>
+</CardGroup>

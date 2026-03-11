@@ -1,0 +1,382 @@
+---
+title: Uninstall Process
+description: Step-by-step guide to the uninstall process, options, and confirmation
+---
+
+Uninstalling applications with Bulk Crap Uninstaller provides multiple methods and extensive control over the process. This guide walks through each uninstall method and available options.
+
+## Uninstall Methods
+
+### Standard Uninstall
+
+The standard uninstall method runs each application's built-in uninstaller:
+
+1. Select the applications you want to uninstall
+2. Click **Uninstall** button or press **Delete** key
+3. Follow the uninstall wizard
+4. Confirm when each uninstaller completes
+
+This method:
+- Uses the application's native uninstaller
+- Shows uninstaller windows and prompts
+- Allows you to customize uninstall options
+- Provides the safest removal method
+
+<Tip>
+Standard uninstall is recommended for applications you're unfamiliar with, as you can review what will be removed.
+</Tip>
+
+### Quiet Uninstall
+
+Quiet (silent) uninstall runs without user interaction:
+
+1. Select the applications to uninstall
+2. Click **Quiet Uninstall** or press **Shift+Delete**
+3. Confirm the batch operation
+4. Uninstallers run silently in the background
+
+Quiet uninstall features:
+- No windows or prompts appear
+- Uses silent uninstall switches when available
+- Automatically handles stuck uninstallers
+- Enables concurrent uninstallation
+- Falls back to manual mode if silent not possible
+
+<Warning>
+Quiet uninstall uses default removal options. Some applications may leave user data or settings behind when uninstalled silently.
+</Warning>
+
+### Manual Uninstall (Advanced)
+
+For problematic applications or thorough removal:
+
+1. Select the application(s)
+2. Choose **Advanced Operations > Manual Uninstall** or press **Ctrl+Shift+Delete**
+3. Optionally run the standard uninstaller first
+4. BCU scans for leftover files and registry entries
+5. Review and confirm junk removal
+
+See the [Junk Removal](/guide/junk-removal) page for detailed information on manual uninstall.
+
+## Uninstall Wizard
+
+When starting a batch uninstall, a multi-step wizard guides you through the process.
+
+<Steps>
+  <Step title="Related Applications">
+    BCU identifies applications that may be related to your selection:
+    
+    - Based on publisher, naming, and install location
+    - Suggests additional applications to uninstall
+    - Check the ones you want to include
+    - Click Next to continue
+    
+    <Note>
+    This step only appears if related applications are found.
+    </Note>
+  </Step>
+  
+  <Step title="Confirmation">
+    Review the applications that will be uninstalled:
+    
+    - List shows all selected applications
+    - Each entry shows name, publisher, and size
+    - Status column indicates:
+      - **Waiting** - Ready to uninstall
+      - **Invalid** - Uninstaller not found or broken
+      - **Protected** - System-protected application
+    - Uncheck any applications you want to skip
+    - Applications are intelligently sorted for optimal uninstall order
+  </Step>
+  
+  <Step title="Running Processes">
+    Check for applications currently in use:
+    
+    - Shows processes related to selected applications
+    - Displays executable name, PID, and window title
+    - Options:
+      - Wait for processes to close naturally
+      - Kill selected processes immediately
+      - Continue without closing (may cause issues)
+    
+    <Warning>
+    Forcefully killing processes can cause data loss. Save your work first.
+    </Warning>
+    
+    This step is skipped if no related processes are running.
+  </Step>
+  
+  <Step title="Settings">
+    Configure uninstall behavior:
+    
+    - **Concurrent uninstall** - Run multiple uninstallers simultaneously
+    - **Maximum concurrent** - Number of simultaneous operations (1-4)
+    - **Only one loud** - Limit interactive uninstallers to one at a time
+    - **Retry failed quiet as loud** - Retry failed silent uninstalls interactively
+    - **Auto-kill stuck uninstallers** - Terminate frozen uninstallers
+    
+    <Tip>
+    Most settings can be configured permanently in Tools > Settings.
+    </Tip>
+  </Step>
+  
+  <Step title="Final Review">
+    Summary before starting:
+    
+    - Applications to be uninstalled
+    - Total size to be freed
+    - Concurrent uninstall enabled
+    - Files still in use warning
+    - System restore point status
+    - Silent/interactive mode
+    
+    Click **Begin** to start the uninstall process.
+  </Step>
+</Steps>
+
+## Progress Window
+
+During uninstallation, a progress window displays:
+
+### Status Information
+
+- **Progress bar** - Overall completion percentage
+- **Current status** - Which applications are currently uninstalling
+- **Application list** - All applications with their status:
+  - Waiting - Not started yet
+  - Uninstalling - Currently running
+  - Completed - Successfully uninstalled
+  - Failed - Uninstaller failed or crashed
+  - Skipped - User skipped or invalid
+  - Protected - Cannot uninstall (system protected)
+
+### List View Details
+
+The progress window shows each application with:
+
+- **Name** - Application display name
+- **Status** - Current uninstall status (color-coded)
+- **Silent** - Whether uninstalling silently or interactively
+- **ID** - Uninstall queue position
+
+### Available Actions
+
+While uninstalling, you can:
+
+- **View Settings** - Check configuration
+- **View Progress Details** - See detailed log
+- **Skip Failed** - Mark failed items as skipped
+- **Retry Selected** - Retry failed uninstalls
+- **Manual Uninstall** - Switch to junk scan for selected items
+- **Cancel** - Stop the uninstall process
+
+<Note>
+The progress window can be minimized. It will flash in the taskbar when attention is needed or when the process completes.
+</Note>
+
+## Concurrent Uninstallation
+
+Run multiple uninstallers simultaneously to save time:
+
+### How It Works
+
+1. Enable in **Settings > Uninstall > Enable concurrent uninstallation**
+2. Set **Maximum concurrent count** (recommended: 2-3)
+3. Enable **Only one loud at a time** to avoid overlapping windows
+4. BCU intelligently schedules uninstallers:
+   - Loud (interactive) uninstallers run first
+   - Quiet uninstallers run in parallel
+   - Updates and system components run last
+   - Large applications prioritized
+
+### Intelligent Sorting
+
+When enabled, BCU automatically orders uninstallers by:
+
+1. **Safety** - Simple deletes last, proper uninstallers first
+2. **Interactivity** - Loud uninstallers before quiet ones
+3. **Dependency** - Updates after parent applications
+4. **Size** - Large applications first (in size buckets)
+5. **Type** - MSI uninstallers prioritized (tend to be slower)
+
+<Tip>
+For maximum speed with many quiet uninstallers, set concurrent count to 3-4. For applications requiring interaction, use 1-2.
+</Tip>
+
+## Uninstall Options
+
+### System Restore Points
+
+Protect your system by creating restore points:
+
+1. Configure in **Settings > Messages > Create restore points**
+2. Options:
+   - **Ask** - Prompt before each uninstall session
+   - **Yes** - Always create restore points
+   - **No** - Never create restore points
+3. When enabled, a restore point is created before uninstalling
+
+<Warning>
+System restore points require sufficient disk space and administrator privileges. They may slow down the uninstall process.
+</Warning>
+
+### Prevent Sleep During Uninstall
+
+Prevents Windows from sleeping during long operations:
+
+- Enable in **Settings > Uninstall > Prevent sleep/shutdown**
+- Blocks sleep, hibernate, and shutdown
+- Automatically released when uninstall completes
+- Shows countdown timer in progress window
+
+### Post-Uninstall Actions
+
+After uninstallation completes:
+
+#### Junk Removal Prompt
+
+BCU asks if you want to scan for leftover files:
+
+1. Prompt appears after successful uninstalls
+2. Click **Yes** to start junk scan
+3. Review found items
+4. Remove confirmed junk
+
+See [Junk Removal](/guide/junk-removal) for details.
+
+#### External Commands
+
+Run custom commands before/after uninstallation:
+
+1. Enable in **Settings > External > Enable external commands**
+2. Configure **Pre-uninstall commands** - Run before any uninstaller
+3. Configure **Post-uninstall commands** - Run after all uninstallers complete
+4. Commands run sequentially in a command window
+5. Supports batch files, executables, and scripts
+
+Example post-uninstall command:
+```batch
+cleanmgr /sagerun:1
+```
+
+<Tip>
+Use external commands to integrate with disk cleaners like BleachBit or CCleaner for thorough cleanup.
+</Tip>
+
+## Special Uninstall Types
+
+### MSI Uninstall
+
+For MSI-based applications:
+
+1. Select a single MSI application
+2. Choose **Advanced Operations > MSI Uninstall**
+3. Select mode:
+   - **Uninstall** - Normal uninstall via msiexec
+   - **Quiet Uninstall** - Silent MSI uninstall
+   - **Modify** - Launch MSI modify/repair interface
+
+### Store App Uninstall
+
+Microsoft Store applications:
+
+- Uninstall using PowerShell commands
+- Export to PowerShell script for automation
+- Some store apps are protected and cannot be removed
+- Requires administrator privileges
+
+### Windows Features
+
+Optional Windows features:
+
+- Enable **Show Windows Features** filter to see them
+- Uses Windows Feature management (DISM/OptionalFeatures)
+- May require restart after removal
+- System restore point recommended
+
+<Warning>
+Removing Windows Features may affect system functionality. Only remove features you're certain you don't need.
+</Warning>
+
+## Handling Problems
+
+### Failed Uninstalls
+
+When an uninstaller fails:
+
+1. Status shows as **Failed** with error details
+2. Options:
+   - **Retry** - Try running the uninstaller again
+   - **Skip** - Mark as skipped and continue
+   - **Manual Uninstall** - Use junk scan to remove manually
+   - **Leave** - Keep the failed entry for later
+
+### Stuck Uninstallers
+
+If an uninstaller freezes:
+
+1. Enable **Auto-kill stuck uninstallers** in settings
+2. BCU detects frozen uninstallers (no activity for 60 seconds)
+3. Automatically terminates and marks as failed
+4. You can manually uninstall the remaining files
+
+### Protected Applications
+
+System-protected applications:
+
+1. Show as **Protected** status
+2. Cannot be uninstalled by default
+3. To override:
+   - Enable **Settings > Advanced > Disable protection**
+   - Confirmation prompt appears
+   - Protection bypassed for session
+
+<Warning>
+Disabling protection allows removal of critical system components. Only use this if you fully understand the consequences.
+</Warning>
+
+### Missing Uninstallers
+
+For applications without uninstallers:
+
+1. Show as **Invalid** status
+2. Standard uninstall not possible
+3. Use **Manual Uninstall** to scan and remove files/registry entries
+4. Or use **Delete Registry Entry** to remove from the list
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Create Restore Points" icon="clock-rotate-left">
+    Always create a system restore point before uninstalling system components or unfamiliar applications.
+  </Card>
+  
+  <Card title="Close Related Applications" icon="xmark">
+    Exit applications before uninstalling them to avoid file-in-use errors and ensure clean removal.
+  </Card>
+  
+  <Card title="Start with Safe Items" icon="shield-check">
+    Begin with known safe applications to test the process before tackling system components.
+  </Card>
+  
+  <Card title="Review Before Proceeding" icon="eye">
+    Always review the final confirmation screen to verify you're uninstalling the correct applications.
+  </Card>
+  
+  <Card title="Use Quiet for Bulk Operations" icon="volume-xmark">
+    Quiet uninstall is most efficient for removing many known applications at once.
+  </Card>
+  
+  <Card title="Follow Up with Junk Scan" icon="trash">
+    Run junk scan after uninstalling to catch any leftover files and registry entries.
+  </Card>
+</CardGroup>
+
+## Keyboard Shortcuts
+
+- **Delete** - Standard uninstall
+- **Shift+Delete** - Quiet uninstall  
+- **Ctrl+Shift+Delete** - Manual uninstall
+- **F5** - Refresh application list
+- **Esc** - Cancel current operation
+- **Enter** - Confirm wizard steps

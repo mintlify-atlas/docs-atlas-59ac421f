@@ -1,0 +1,215 @@
+---
+title: Building from Source
+description: How to compile BCUninstaller from source code
+---
+
+## Prerequisites
+
+To build Bulk Crap Uninstaller from source, you'll need to set up your development environment with the required tools and dependencies.
+
+### Required Software
+
+<CardGroup cols={2}>
+  <Card title="Visual Studio" icon="code">
+    Visual Studio 2019 or 2022 (Community edition works fine)
+  </Card>
+  
+  <Card title=".NET SDK" icon="microsoft">
+    .NET 8 SDK (included with Visual Studio)
+  </Card>
+</CardGroup>
+
+### Visual Studio Workloads
+
+You need to install the following workloads in Visual Studio:
+
+<Steps>
+  <Step title=".NET desktop development">
+    This workload provides the core .NET desktop development tools required for building the C# projects.
+  </Step>
+  
+  <Step title="Desktop development with C++">
+    Required for building the BCU-launcher native C++ component.
+  </Step>
+  
+  <Step title="Class Designer (Optional)">
+    Install the Class Designer component if you wish to view or edit the included class diagrams.
+  </Step>
+</Steps>
+
+## Getting the Source Code
+
+Clone the repository from GitHub:
+
+```bash
+git clone https://github.com/Klocman/Bulk-Crap-Uninstaller.git
+cd Bulk-Crap-Uninstaller
+```
+
+## Building with Visual Studio
+
+<Steps>
+  <Step title="Open the Solution">
+    Navigate to the `source` directory and open `BulkCrapUninstaller.sln` in Visual Studio.
+    
+    ```
+    source/BulkCrapUninstaller.sln
+    ```
+  </Step>
+  
+  <Step title="Restore NuGet Packages">
+    Visual Studio should automatically restore NuGet packages when you open the solution. If not, right-click the solution in Solution Explorer and select "Restore NuGet Packages".
+  </Step>
+  
+  <Step title="Select Build Configuration">
+    Choose your build configuration:
+    - **Debug** - For development with debugging symbols
+    - **Release** - For optimized production builds
+    
+    And select the platform:
+    - **Any CPU** - Platform-agnostic build
+    - **x64** - 64-bit only
+    - **x86** - 32-bit only
+    - **ARM64** - ARM64 architecture
+  </Step>
+  
+  <Step title="Build the Solution">
+    Build the entire solution:
+    - Press `Ctrl+Shift+B` or
+    - Select **Build > Build Solution** from the menu
+    
+    <Warning>
+      If the compile fails the first time, try **Build > Rebuild Solution**. The first build occasionally has dependency resolution issues that a rebuild fixes.
+    </Warning>
+  </Step>
+</Steps>
+
+## Build Output
+
+After a successful build, the compiled binaries will be located in:
+
+```
+source/BulkCrapUninstaller/bin/[Configuration]/[Platform]/
+```
+
+For example:
+- `source/BulkCrapUninstaller/bin/Debug/net8.0-windows/`
+- `source/BulkCrapUninstaller/bin/Release/net8.0-windows/`
+
+## Solution Structure
+
+The solution contains multiple projects:
+
+<CardGroup cols={2}>
+  <Card title="Main Projects" icon="app-window">
+    - **BulkCrapUninstaller** - GUI application
+    - **BCU-console** - Console application
+    - **BCU-launcher** - Native launcher
+  </Card>
+  
+  <Card title="Libraries" icon="books">
+    - **UninstallTools** - Core library
+    - **KlocTools** - Utility library
+    - **ObjectListView** - UI controls
+  </Card>
+  
+  <Card title="Helpers" icon="wrench">
+    - **SteamHelper**
+    - **WinUpdateHelper**
+    - **StoreAppHelper**
+    - **OculusHelper**
+    - **ScriptHelper**
+  </Card>
+  
+  <Card title="Support" icon="puzzle-piece">
+    - **UninstallerAutomatizer**
+    - **UniversalUninstaller**
+    - **SimpleTreeMap**
+    - And more...
+  </Card>
+</CardGroup>
+
+All projects will be built as part of the solution build process.
+
+## Building for Release
+
+To create a release build suitable for distribution:
+
+<Steps>
+  <Step title="Run the Publish Script">
+    The repository includes a `publish.bat` script that creates optimized release builds:
+    
+    ```bash
+    publish.bat
+    ```
+    
+    This script is located in the root of the repository (parent directory of `source`).
+  </Step>
+  
+  <Step title="Build the Installer (Optional)">
+    To create the installer package, you'll need InnoSetup v6.4 or later.
+    
+    After running `publish.bat`, use InnoSetup to compile the installer script (if present in the repository).
+  </Step>
+</Steps>
+
+## Running Tests
+
+The solution includes a test project: **BulkCrapUninstallerTests**
+
+<Note>
+  Some tests require:
+  - Running as 64-bit process
+  - Specific applications to be installed on the system
+  - Administrator privileges
+</Note>
+
+To run tests:
+
+1. Open Test Explorer: **Test > Test Explorer**
+2. Click **Run All** or select specific tests
+
+## Common Build Issues
+
+<AccordionGroup>
+  <Accordion title="Build fails on first attempt">
+    Try **Build > Rebuild Solution**. The dependency chain is complex, and a rebuild often resolves ordering issues.
+  </Accordion>
+  
+  <Accordion title="Missing C++ build tools">
+    If you get errors building BCU-launcher, ensure you have the "Desktop development with C++" workload installed in Visual Studio.
+  </Accordion>
+  
+  <Accordion title=".NET SDK version mismatch">
+    Make sure you have .NET 8 SDK installed. You can check by running:
+    ```bash
+    dotnet --list-sdks
+    ```
+  </Accordion>
+  
+  <Accordion title="NuGet package restore fails">
+    Try:
+    1. Delete the `.vs` folder in the solution directory
+    2. Delete `bin` and `obj` folders in all project directories
+    3. Restart Visual Studio and rebuild
+  </Accordion>
+</AccordionGroup>
+
+## Development Tips
+
+- Use **Debug** configuration for development with full debugging support
+- The **AnyCPU** platform is recommended for general development
+- Some features may behave differently between 32-bit and 64-bit builds
+- Test on multiple platforms if making changes to platform-specific code
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing" icon="code-pull-request" href="/developer/contributing">
+    Learn how to contribute your changes back to the project
+  </Card>
+  
+  <Card title="Architecture" icon="sitemap" href="/developer/architecture">
+    Understand the codebase structure
+  </Card>
+</CardGroup>

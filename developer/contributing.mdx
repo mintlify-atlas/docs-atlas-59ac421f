@@ -1,0 +1,253 @@
+---
+title: Contributing to BCUninstaller
+description: Guidelines for contributing code, translations, and bug reports
+---
+
+## How to Contribute
+
+Contributions to Bulk Crap Uninstaller are welcome! Whether you're fixing bugs, adding features, improving documentation, or translating the interface, your help is appreciated.
+
+## Ways to Contribute
+
+<CardGroup cols={2}>
+  <Card title="Code Contributions" icon="code" href="#submitting-code">
+    Submit bug fixes and new features via pull requests
+  </Card>
+  
+  <Card title="Translations" icon="language" href="/developer/translations">
+    Help translate BCUninstaller into your language
+  </Card>
+  
+  <Card title="Bug Reports" icon="bug" href="#filing-bug-reports">
+    Report issues with detailed reproduction steps
+  </Card>
+  
+  <Card title="Feature Requests" icon="lightbulb" href="#suggesting-features">
+    Suggest new features and improvements
+  </Card>
+</CardGroup>
+
+## Filing Bug Reports
+
+When reporting a bug, please include:
+
+- **Clear description** of the problem
+- **Steps to reproduce** the issue
+- **Expected behavior** vs actual behavior
+- **System information** (Windows version, BCU version)
+- **Screenshots or logs** if applicable
+
+### Where to Report
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github">
+    [Create a new issue](https://github.com/Klocman/Bulk-Crap-Uninstaller/issues/new) on the GitHub repository
+  </Card>
+  
+  <Card title="Anonymous Feedback" icon="paper-plane">
+    Use the [feedback form](http://klocmansoftware.weebly.com/feedback--contact.html) if you prefer anonymous reporting
+  </Card>
+</CardGroup>
+
+## Suggesting Features
+
+Feature suggestions follow the same process as bug reports:
+
+1. Search existing issues to avoid duplicates
+2. Create a new issue with a clear description
+3. Explain the use case and benefits
+4. Provide examples if applicable
+
+<Note>
+  Well-explained suggestions with clear use cases are more likely to be implemented.
+</Note>
+
+## Submitting Code
+
+The best way to contribute code is through pull requests on GitHub.
+
+### Before You Start
+
+<Steps>
+  <Step title="Set Up Your Environment">
+    Follow the [building from source](/developer/building) guide to set up Visual Studio and compile the project.
+  </Step>
+  
+  <Step title="Fork the Repository">
+    Create your own fork of the repository on GitHub.
+  </Step>
+  
+  <Step title="Create a Feature Branch">
+    Create a new branch for your changes:
+    
+    ```bash
+    git checkout -b feature/my-new-feature
+    ```
+    
+    or for bug fixes:
+    
+    ```bash
+    git checkout -b fix/bug-description
+    ```
+  </Step>
+</Steps>
+
+### Pull Request Guidelines
+
+<Card title="Keep PRs Focused" icon="bullseye">
+  Limit each pull request to a **single bug fix** or **single feature**. This makes reviewing, testing, and merging much easier.
+  
+  Create separate branches and PRs for different changes.
+</Card>
+
+### Coding Standards
+
+When contributing code, please follow these guidelines:
+
+- **Match existing code style** - Follow the formatting and naming conventions used in the codebase
+- **Write clear commit messages** - Describe what changed and why
+- **Comment complex logic** - Add comments explaining non-obvious code
+- **Test your changes** - Ensure your code works as expected
+- **Update documentation** - If your changes affect user-facing features
+
+### Submitting Your Pull Request
+
+<Steps>
+  <Step title="Commit Your Changes">
+    Make clear, focused commits:
+    
+    ```bash
+    git add .
+    git commit -m "Fix: Description of what was fixed"
+    ```
+  </Step>
+  
+  <Step title="Push to Your Fork">
+    ```bash
+    git push origin feature/my-new-feature
+    ```
+  </Step>
+  
+  <Step title="Create Pull Request">
+    1. Go to the original repository on GitHub
+    2. Click "New Pull Request"
+    3. Select your fork and branch
+    4. Provide a clear description of your changes
+    5. Reference any related issues
+  </Step>
+  
+  <Step title="Respond to Review Feedback">
+    Maintainers may request changes. Please respond promptly and update your PR as needed.
+  </Step>
+</Steps>
+
+## Development Environment Setup
+
+### Visual Studio Requirements
+
+<Card title="Recommended Setup" icon="code">
+  - **Visual Studio 2019 or 2022**
+  - **.NET desktop development** workload
+  - **Desktop development with C++** workload
+  - **Class Designer** component (optional)
+</Card>
+
+### First Build
+
+<Warning>
+  The first build may fail due to dependency resolution. If this happens, use **Build > Rebuild Solution**.
+</Warning>
+
+### Testing
+
+The solution includes unit tests in the **BulkCrapUninstallerTests** project.
+
+<Note>
+  Some tests require:
+  - Running as 64-bit
+  - Specific applications installed
+  - Administrator privileges
+</Note>
+
+## Code Architecture Overview
+
+Understanding the codebase structure will help you contribute effectively:
+
+### Main Components
+
+- **User Interfaces**: BulkCrapUninstaller (GUI) and BCU-Console (CLI)
+- **Core Libraries**: UninstallTools (main logic), KlocTools (utilities)
+- **Helper Applications**: SteamHelper, WinUpdateHelper, StoreAppHelper, OculusHelper, ScriptHelper
+
+Helper applications:
+- Are separate executables
+- Communicate via CLI
+- Can be used independently
+- Decouple specialized code from the main application
+
+<Card title="Learn More" icon="book" href="/developer/architecture">
+  Read the full architecture documentation for detailed information about the codebase structure.
+</Card>
+
+## What Makes a Good Contribution?
+
+### Excellent Contributions
+
+✅ Bug fixes with clear reproduction cases
+✅ Well-tested new features
+✅ Performance improvements with benchmarks
+✅ Focused pull requests (one issue per PR)
+✅ Clear documentation updates
+✅ Code that follows existing patterns
+
+### Things to Avoid
+
+❌ Large refactoring without discussion
+❌ Multiple unrelated changes in one PR
+❌ Changes without testing
+❌ Breaking existing functionality
+❌ Code style that doesn't match the project
+
+## Getting Help
+
+If you have questions about contributing:
+
+- Open a discussion on GitHub
+- Comment on related issues
+- Review existing pull requests for examples
+
+## Recognition
+
+All contributors are valued! Your contributions will be:
+
+- Credited in release notes
+- Listed in the project's contributor list
+- Appreciated by the BCUninstaller community
+
+## Donation
+
+If you'd like to support the project financially:
+
+<Card title="Donate" icon="heart" href="http://klocmansoftware.weebly.com/donate.html">
+  Only donate using official donate links. Check the main window of BCUninstaller or the README for official links.
+</Card>
+
+<Warning>
+  Only use official donation links to ensure your contribution reaches the project maintainer.
+</Warning>
+
+## Related Resources
+
+<CardGroup cols={3}>
+  <Card title="Building from Source" icon="hammer" href="/developer/building">
+    Set up your development environment
+  </Card>
+  
+  <Card title="Architecture" icon="sitemap" href="/developer/architecture">
+    Understand the codebase structure
+  </Card>
+  
+  <Card title="Translations" icon="language" href="/developer/translations">
+    Help translate BCUninstaller
+  </Card>
+</CardGroup>

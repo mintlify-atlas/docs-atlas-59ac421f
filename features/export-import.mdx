@@ -1,0 +1,468 @@
+---
+title: Export & Import Lists
+description: Export application lists and batch uninstall configurations to share or automate installations across multiple systems
+---
+
+## Overview
+
+BCU allows you to export lists of installed applications and import them on other systems. This is useful for creating standardized uninstall scripts, documenting installed software, or preparing batch operations.
+
+## Exporting Application Lists
+
+### From the GUI
+
+1. Select applications to export (or select all)
+2. Go to **File** → **Export** → **Export to file**
+3. Choose a filename (`.bcul` extension)
+4. The selected applications are serialized to XML
+
+### Programmatic Export
+
+```csharp
+public static bool ExportUninstallers(
+    IEnumerable<ApplicationUninstallerEntry> itemsToExport, 
+    string filename)
+{
+    var applicationUninstallerEntries = itemsToExport as List<ApplicationUninstallerEntry> ??
+                                        itemsToExport.ToList();
+    if (applicationUninstallerEntries.Count <= 0)
+        return false;
+
+    try
+    {
+        ApplicationEntrySerializer.SerializeApplicationEntries(
+            filename, applicationUninstallerEntries);
+    }
+    catch (Exception ex)
+    {
+        MessageBoxes.ExportFailed(ex.Message, null);
+        return false;
+    }
+    return true;
+}
+```
+
+<Note>
+**Export Format**: BCU exports to `.bcul` files (Bulk Crap Uninstaller List), which are XML files containing serialized application entries.
+</Note>
+
+## BCUL File Format
+
+The `.bcul` format is an XML serialization of application information:
+
+```csharp
+public sealed class ApplicationEntrySerializer
+{
+    public static void SerializeApplicationEntries(
+        string filename, 
+        IEnumerable<ApplicationUninstallerEntry> items)
+    {
+        SerializationTools.SerializeToXml(
+            filename, 
+            new ApplicationEntrySerializer(items));
+    }
+
+    public ApplicationEntrySerializer(IEnumerable<ApplicationUninstallerEntry> items)
+    {
+        Items = items.ToList();
+    }
+
+    // Needed for serialization
+    public ApplicationEntrySerializer() { }
+
+    public List<ApplicationUninstallerEntry> Items { get; set; }
+}
+```
+
+### Structure
+
+<Tabs>
+  <Tab title="BCUL XML Structure">
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <ApplicationEntrySerializer>
+      <Items>
+        <ApplicationUninstallerEntry>
+          <DisplayName>Example Application</DisplayName>
+          <DisplayVersion>1.0.0</DisplayVersion>
+          <Publisher>Example Publisher</Publisher>
+          <InstallLocation>C:\Program Files\Example</InstallLocation>
+          <InstallDate>2024-01-15T00:00:00</InstallDate>
+          <EstimatedSize>104857600</EstimatedSize>
+          <UninstallString>C:\Program Files\Example\uninstall.exe</UninstallString>
+          <QuietUninstallString>C:\Program Files\Example\uninstall.exe /S</QuietUninstallString>
+          <RegistryPath>HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\Example</RegistryPath>
+          <RegistryKeyName>Example</RegistryKeyName>
+          <UninstallerKind>Nsis</UninstallerKind>
+          <IsValid>true</IsValid>
+          <IsProtected>false</IsProtected>
+          <SystemComponent>false</SystemComponent>
+        </ApplicationUninstallerEntry>
+        <!-- More entries -->
+      </Items>
+    </ApplicationEntrySerializer>
+    ```
+  </Tab>
+  <Tab title="Serialized Properties">
+    The following properties are included in exports:
+
+    **Basic Information**:
+    - DisplayName (or RawDisplayName)
+    - DisplayVersion
+    - Publisher
+    - Comment
+
+    **Installation Details**:
+    - InstallLocation
+    - InstallSource
+    - InstallDate
+    - EstimatedSize
+
+    **Uninstaller Information**:
+    - UninstallString
+    - QuietUninstallString
+    - ModifyPath
+    - UninstallerKind
+    - UninstallerLocation
+    - UninstallerFullFilename
+
+    **Registry Information**:
+    - RegistryPath
+    - RegistryKeyName
+    - BundleProviderKey (GUID)
+
+    **Metadata**:
+    - IsValid
+    - IsProtected
+    - IsOrphaned
+    - IsUpdate
+    - SystemComponent
+    - IsWebBrowser
+
+    **Additional**:
+    - AboutUrl
+    - DisplayIcon
+    - ParentKeyName
+  </Tab>
+</Tabs>
+
+## Importing Application Lists
+
+### Manual Import
+
+1. Go to **File** → **Import** → **Import from file**
+2. Select a `.bcul` file
+3. BCU loads the list and matches entries to currently installed applications
+4. Matched applications can be selected for uninstallation
+
+### Automatic Batch Processing
+
+```bash
+# Import and automatically uninstall all apps from list
+BCUninstaller.exe /uninstall-list "applications.bcul" /quiet /auto
+
+# Import and show GUI for selection
+BCUninstaller.exe /uninstall-list "applications.bcul"
+```
+
+<Warning>
+**Auto Mode Warning**: `/auto` flag will uninstall ALL applications in the list without confirmation. Use carefully!
+</Warning>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Software Auditing" icon="clipboard-list">
+    Export installed software lists for documentation and compliance reporting
+  </Card>
+  <Card title="System Deployment" icon="rocket">
+    Create standard uninstall lists for cleaning up pre-installed bloatware
+  </Card>
+  <Card title="Migration Planning" icon="truck">
+    Document applications before migration to plan reinstallation on new systems
+  </Card>
+  <Card title="Automated Cleanup" icon="broom">
+    Create reusable scripts for removing specific application sets
+  </Card>
+</CardGroup>
+
+## Export Options
+
+<Accordion title="Export Selected Only">
+Export only the applications you've selected in the GUI:
+
+- Select applications using Ctrl+Click or Shift+Click
+- Use filters to select groups
+- Export to create focused uninstall lists
+
+**Use Case**: Remove a specific set of applications across multiple computers
+</Accordion>
+
+<Accordion title="Export All Applications">
+Export the complete list of installed applications:
+
+- Ctrl+A to select all
+- Export for complete system documentation
+
+**Use Case**: System auditing and inventory management
+</Accordion>
+
+<Accordion title="Export with Filters">
+Apply filters before exporting:
+
+- Filter by publisher (e.g., all Adobe products)
+- Filter by install date (e.g., apps installed after specific date)
+- Filter by size or other criteria
+- Export filtered results
+
+**Use Case**: Remove all applications from a specific vendor
+</Accordion>
+
+## Comparison and Matching
+
+When importing, BCU matches entries to installed applications:
+
+```csharp
+private static readonly ILookup<string, string> PropertyRelationships = 
+    new Dictionary<string, List<string>>
+{
+    {
+        nameof(UninstallString),
+        new List<string>
+        {
+            nameof(UninstallerLocation),
+            nameof(UninstallerFullFilename)
+        }
+    },
+    {
+        nameof(RegistryKeyName),
+        new List<string> { nameof(RatingId) }
+    },
+}.SelectMany(x => x.Value.Select(y => new { x.Key, Value = y }))
+ .ToLookup(x => x.Key, x => x.Value);
+```
+
+### Matching Criteria
+
+<Tabs>
+  <Tab title="Strong Matches">
+    **Registry Key Match**:
+    - Same `RegistryKeyName`
+    - Same `BundleProviderKey` (MSI GUID)
+
+    **Install Location Match**:
+    - Same `InstallLocation` path
+    - Same `UninstallerFullFilename`
+  </Tab>
+  <Tab title="Fuzzy Matches">
+    **Name and Publisher**:
+    - Similar `DisplayName` (fuzzy match)
+    - Same `Publisher`
+    - Similar `DisplayVersion`
+
+    **Confidence Score**: Matches are scored based on similarity
+  </Tab>
+  <Tab title="No Match">
+    If an application in the list is not found:
+    - Entry is marked as "Not Installed"
+    - Skipped during batch operations
+    - Displayed separately in the GUI
+  </Tab>
+</Tabs>
+
+## Scripting and Automation
+
+### PowerShell Integration
+
+```powershell
+# Export list of installed applications
+& "C:\Program Files\BCUninstaller\BCUninstaller.exe" /export "installed-apps.bcul"
+
+# Uninstall all apps from list quietly
+& "C:\Program Files\BCUninstaller\BCUninstaller.exe" `
+    /uninstall-list "bloatware.bcul" `
+    /quiet `
+    /auto
+
+# Uninstall with confirmation
+& "C:\Program Files\BCUninstaller\BCUninstaller.exe" `
+    /uninstall-list "applications.bcul"
+```
+
+### Batch Scripts
+
+```batch
+@echo off
+REM Automated bloatware removal script
+
+echo Removing pre-installed bloatware...
+"C:\Program Files\BCUninstaller\BCUninstaller.exe" /uninstall-list "bloatware.bcul" /quiet /auto
+
+if %ERRORLEVEL% EQU 0 (
+    echo Bloatware removed successfully!
+) else (
+    echo Error occurred during uninstallation
+    exit /b %ERRORLEVEL%
+)
+
+echo Cleaning up leftover files...
+REM Additional cleanup commands here
+```
+
+### Task Scheduler
+
+Create scheduled tasks for periodic cleanup:
+
+1. Open Task Scheduler
+2. Create new task
+3. Set trigger (e.g., weekly)
+4. Set action: Run `BCUninstaller.exe /uninstall-list "path\to\list.bcul" /quiet /auto`
+5. Configure for highest privileges
+
+<Note>
+**Scheduled Cleanup**: Useful for removing apps that frequently reinstall themselves or for maintaining clean state on shared systems.
+</Note>
+
+## Advanced Export Features
+
+### Custom Filtering
+
+Create custom export lists programmatically:
+
+```csharp
+// Export all Adobe products
+var adobeApps = allApplications
+    .Where(x => x.Publisher != null && 
+                x.Publisher.Contains("Adobe", StringComparison.OrdinalIgnoreCase));
+AppUninstaller.ExportUninstallers(adobeApps, "adobe-products.bcul");
+
+// Export all applications installed after a date
+var recentApps = allApplications
+    .Where(x => x.InstallDate > new DateTime(2024, 1, 1));
+AppUninstaller.ExportUninstallers(recentApps, "recent-installs.bcul");
+
+// Export protected system components
+var sysComponents = allApplications
+    .Where(x => x.SystemComponent || x.IsProtected);
+AppUninstaller.ExportUninstallers(sysComponents, "system-components.bcul");
+```
+
+### Differential Exports
+
+Compare two systems and export differences:
+
+```csharp
+public List<ApplicationUninstallerEntry> GetDifferentialList(
+    List<ApplicationUninstallerEntry> system1Apps,
+    List<ApplicationUninstallerEntry> system2Apps)
+{
+    var diff = new List<ApplicationUninstallerEntry>();
+    
+    foreach (var app in system1Apps)
+    {
+        var match = system2Apps.FirstOrDefault(x => 
+            x.RegistryKeyName == app.RegistryKeyName ||
+            (x.DisplayName == app.DisplayName && x.Publisher == app.Publisher));
+        
+        if (match == null)
+            diff.Add(app);
+    }
+    
+    return diff;
+}
+```
+
+## Export Formats
+
+<Tabs>
+  <Tab title="BCUL (XML)">
+    **Native Format**:
+    - Complete application information
+    - Preserves all BCU-specific data
+    - Can be imported back into BCU
+    - Human-readable XML
+
+    **Best For**: Automation and batch operations
+  </Tab>
+  <Tab title="CSV">
+    **Spreadsheet Format**:
+    - Flat table structure
+    - Compatible with Excel
+    - Easy to review and edit
+    - Limited metadata
+
+    **Best For**: Auditing and reporting
+  </Tab>
+  <Tab title="HTML">
+    **Report Format**:
+    - Formatted for viewing
+    - Includes charts and statistics
+    - Printable reports
+    - No import capability
+
+    **Best For**: Documentation and presentations
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Version Control" icon="code-branch">
+    Store export files in version control to track changes over time
+  </Card>
+  <Card title="Documentation" icon="book">
+    Add comments to BCUL files to document purpose and usage
+  </Card>
+  <Card title="Testing" icon="flask">
+    Test import/uninstall on non-production systems first
+  </Card>
+  <Card title="Regular Updates" icon="clock">
+    Update export lists regularly as software changes
+  </Card>
+</CardGroup>
+
+<Warning>
+**Path Dependencies**: Exported uninstall strings may contain system-specific paths. Test imports on target systems before automating.
+</Warning>
+
+## Troubleshooting
+
+### Import Issues
+
+**Application Not Found**:
+- Application may have different name/version on target system
+- Application may not be installed
+- Registry key names may differ between versions
+
+**Solution**: Use fuzzy matching and verify installed applications manually
+
+**Invalid Uninstall Strings**:
+- Paths may differ between systems
+- Uninstaller may have been moved/deleted
+
+**Solution**: BCU validates uninstall strings and marks invalid entries
+
+### Export Issues
+
+**Empty Export**:
+- No applications selected
+- Filter too restrictive
+
+**Solution**: Verify selection before exporting
+
+**Serialization Errors**:
+- Special characters in names
+- Corrupted application data
+
+**Solution**: Review application details for invalid data
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bulk Uninstall" href="/features/bulk-uninstall" icon="list-check">
+    Using imported lists for batch uninstallation
+  </Card>
+  <Card title="Unattended Mode" href="/features/unattended-mode" icon="robot">
+    Automating uninstalls from exported lists
+  </Card>
+</CardGroup>

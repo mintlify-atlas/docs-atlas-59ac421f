@@ -1,0 +1,210 @@
+---
+title: Interface Overview
+description: Understanding the main window layout, toolbar, menus, and list view
+---
+
+Bulk Crap Uninstaller features a comprehensive interface designed for efficient application management. This guide covers the main components of the user interface.
+
+## Main Window Layout
+
+The main window is divided into several key areas:
+
+### Application List View
+
+The central area displays all installed applications in a detailed list view with columns for:
+
+- **Application Name** - Display name of the installed application
+- **Publisher** - Software publisher or developer
+- **Version** - Installed version number
+- **Size** - Estimated installation size
+- **Install Date** - When the application was installed
+- **Rating** - Community ratings (when enabled)
+- **Certificates** - Digital signature validation status
+
+The list view supports:
+- Single and multi-selection
+- Checkbox mode for batch operations
+- Grouping by various criteria
+- Column sorting (click column headers)
+- Column reordering (drag and drop headers)
+
+<Note>
+You can toggle between checkbox mode and standard selection mode in Settings > Display > Use checkboxes for selection.
+</Note>
+
+### Toolbar
+
+Located at the top of the window, the toolbar provides quick access to common operations:
+
+- **Uninstall** - Start uninstall process for selected applications
+- **Quiet Uninstall** - Uninstall silently without user interaction
+- **Properties** - View detailed information about selected applications
+- **Refresh** - Reload the application list
+- **Selection tools** - Select all, select none, invert selection
+
+<Tip>
+You can hide the toolbar via View > Display > Show Toolbar if you prefer using menu commands or keyboard shortcuts.
+</Tip>
+
+### Settings Sidebar
+
+The right sidebar (when enabled) contains filtering and search options:
+
+- **Search box** - Quickly find applications by name
+- **Filter controls** - Show/hide specific application types
+- **Advanced filters** - Create custom filtering rules
+
+### Status Bar
+
+The bottom status bar displays:
+- Total number of applications (filtered and total)
+- Combined size of displayed applications
+- Current operation status
+- Processing progress indicators
+
+## Menu Bar
+
+The menu bar provides access to all features organized into logical groups:
+
+### File Menu
+
+- **Load Uninstaller List** - Load a saved list of applications
+- **Reload Uninstallers** - Refresh the application list
+- **Export Selected** - Export selected applications to file
+- **Exit** - Close the application
+
+### Basic Operations Menu
+
+- **Uninstall** - Standard uninstall for selected applications
+- **Quiet Uninstall** - Silent uninstall without prompts
+- **Modify** - Run the modify/repair operation
+- **Properties** - View detailed application properties
+
+### Advanced Operations Menu
+
+- **Manual Uninstall** - Advanced junk removal for selected applications
+- **Open Registry Key** - Open the application's registry entry in regedit
+- **Delete Registry Entry** - Remove registry entries
+- **Create Backup** - Export registry entries to .reg file
+- **Disable Autostart** - Disable startup entries
+- **MSI Options** - Special operations for MSI-based applications
+
+<Warning>
+Advanced operations can affect system stability if used incorrectly. Always create backups before modifying registry entries or removing system components.
+</Warning>
+
+### Tools Menu
+
+- **Clean Program Files** - Find and remove orphaned folders in Program Files
+- **Uninstall from Directory** - Attempt to uninstall based on installation folder
+- **Open Programs and Features** - Open Windows' built-in uninstaller
+- **Settings** - Access application configuration
+
+### View Menu
+
+- **Display Toolbar** - Toggle toolbar visibility
+- **Display Settings Panel** - Toggle settings sidebar
+- **Display Status Bar** - Toggle status bar
+- **Show Color Legend** - Display color coding legend
+- **Show Tree Map** - Display visual size representation
+- **Use System Theme** - Toggle dark/light theme
+
+### Help Menu
+
+- **Check for Updates** - Manually check for application updates
+- **Submit Feedback** - Send feedback to developers
+- **About** - View version and license information
+
+## Tree Map Visualization
+
+When enabled (View > Show Tree Map), the bottom panel displays a visual representation of installed applications:
+
+- Each rectangle represents an application
+- Size is proportional to disk space used
+- Colors indicate application type and status
+- Click to select, Ctrl+Click to add to selection
+- Right-click for context menu
+
+<Tip>
+The tree map is particularly useful for identifying large applications consuming significant disk space.
+</Tip>
+
+## Color Coding
+
+Applications are color-coded to indicate their status and type:
+
+- **Green** - Valid applications with good certificates
+- **Red** - Invalid or problematic entries
+- **Orange** - Applications without valid certificates
+- **Blue** - Store apps (Microsoft Store/Windows Apps)
+- **Purple** - Orphaned applications (no uninstaller found)
+- **Gray** - Protected system components
+- **Yellow** - Windows updates
+
+To view the complete legend, enable it via View > Show Color Legend.
+
+<Note>
+Color coding can be adjusted for colorblind users in Settings > Miscellaneous > Colorblind mode.
+</Note>
+
+## Keyboard Shortcuts
+
+Common keyboard shortcuts for efficient navigation:
+
+- **F5** - Reload uninstallers
+- **F3 / Ctrl+F** - Focus search box
+- **Delete** - Uninstall selected
+- **Shift+Delete** - Quiet uninstall
+- **Ctrl+Shift+Delete** - Manual uninstall
+- **Alt+Enter** - Properties
+- **Ctrl+A** - Select all
+- **Ctrl+C** - Copy full information
+- **Ctrl+B** - Create registry backup
+- **Ctrl+R** - Open in regedit
+- **Ctrl+P** - Settings
+- **Ctrl+O** - Load uninstaller list
+- **Alt+F4** - Exit
+
+## Context Menu
+
+Right-click any application (or press the Apps/Menu key) to access:
+
+- **Uninstall / Quiet Uninstall**
+- **Manual Uninstall**
+- **Properties**
+- **Modify**
+- **Open in File Explorer** - Navigate to install/uninstall locations
+- **Search Online** - Search for application information
+- **Copy to Clipboard** - Various copy options
+- **Advanced Operations** - Registry, MSI, and startup options
+
+## First Run Setup
+
+On first launch, a setup wizard guides you through:
+
+<Steps>
+  <Step title="Welcome">
+    Introduction to Bulk Crap Uninstaller and key features.
+  </Step>
+  
+  <Step title="Scan Configuration">
+    Choose which sources to scan for installed applications:
+    - Windows Registry
+    - Program Files folders
+    - Steam games
+    - Microsoft Store apps
+    - Chocolatey packages
+    - Scoop apps
+    - Oculus apps
+  </Step>
+  
+  <Step title="Preferences">
+    Configure basic settings like update checks and anonymous statistics.
+  </Step>
+  
+  <Step title="Complete">
+    Begin the initial scan of installed applications.
+  </Step>
+</Steps>
+
+You can re-run the setup wizard anytime via Tools > Run Setup Wizard.

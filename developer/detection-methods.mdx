@@ -1,0 +1,358 @@
+---
+title: "Detection Methods"
+description: "How BCUninstaller discovers and identifies installed applications"
+---
+
+BCU uses a multi-source detection architecture to discover installed applications from various locations and installation methods. This comprehensive approach ensures maximum coverage while minimizing duplicates.
+
+## Detection Architecture
+
+BCU employs multiple factory classes that scan different sources concurrently:
+
+<CardGroup cols={2}>
+  <Card title="Registry Factory" icon="database">
+    Scans Windows registry for standard uninstaller entries
+  </Card>
+  <Card title="Store App Factory" icon="microsoft">
+    Detects Windows Store and UWP applications
+  </Card>
+  <Card title="Steam Factory" icon="steam">
+    Discovers Steam games and applications
+  </Card>
+  <Card title="Chocolatey Factory" icon="cube">
+    Finds applications installed via Chocolatey
+  </Card>
+  <Card title="Scoop Factory" icon="bucket">
+    Detects Scoop-installed applications
+  </Card>
+  <Card title="Windows Feature Factory" icon="windows">
+    Identifies Windows optional features
+  </Card>
+  <Card title="Windows Update Factory" icon="download">
+    Lists installed Windows updates
+  </Card>
+  <Card title="Oculus Factory" icon="vr-cardboard">
+    Finds Oculus VR applications
+  </Card>
+  <Card title="Directory Factory" icon="folder-open">
+    Scans Program Files for orphaned apps
+  </Card>
+  <Card title="Script Factory" icon="file-code">
+    Loads predefined uninstall scripts
+  </Card>
+</CardGroup>
+
+## Registry Detection
+
+The most common detection method scans Windows registry locations where uninstallers are registered.
+
+### Registry Paths Scanned
+
+```csharp Registry Locations
+// 64-bit uninstallers
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+// 32-bit uninstallers on 64-bit Windows
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+
+// Per-user installations
+HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+// MSI product codes
+HKEY_CLASSES_ROOT\Installer\Products
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UserData
+```
+
+### Registry Key Analysis
+
+<Accordion title="Required Fields">
+  BCU looks for these essential registry values:
+  
+  - `DisplayName` - Application name
+  - `UninstallString` - Command to uninstall
+  - `DisplayIcon` - Application icon path
+  - `Publisher` - Software publisher/vendor
+  - `DisplayVersion` - Version number
+  - `InstallLocation` - Installation directory
+  - `InstallDate` - Installation timestamp
+  - `EstimatedSize` - Disk space used (in KB)
+  - `QuietUninstallString` - Silent uninstall command
+</Accordion>
+
+<Accordion title="Optional Fields">
+  Additional metadata BCU extracts:
+  
+  - `URLInfoAbout` - Product website
+  - `HelpLink` - Support URL
+  - `InstallSource` - Original installer location
+  - `ModifyPath` - Command to modify installation
+  - `SystemComponent` - Hidden system component flag
+  - `WindowsInstaller` - Indicates MSI installation
+  - `ParentKeyName` - Parent application reference
+</Accordion>
+
+### Filtering Logic
+
+```csharp RegistryFactory.cs
+public static bool IsValidUninstallerKey(RegistryKey key)
+{
+    // Must have DisplayName or use registry key name
+    string displayName = key.GetValue("DisplayName") as string;
+    if (string.IsNullOrEmpty(displayName))
+        return false;
+    
+    // Must have UninstallString unless it's an MSI with ProductCode
+    string uninstallString = key.GetValue("UninstallString") as string;
+    bool isMsi = key.GetValue("WindowsInstaller") as int? == 1;
+    if (string.IsNullOrEmpty(uninstallString) && !isMsi)
+        return false;
+    
+    // Skip system components by default
+    int systemComponent = key.GetValue("SystemComponent") as int? ?? 0;
+    if (systemComponent == 1)
+        return false;
+    
+    return true;
+}
+```
+
+## Windows Store App Detection
+
+BCU uses PowerShell to query installed Windows Store applications.
+
+```powershell Get-AppxPackage Query
+Get-AppxPackage -AllUsers | Select-Object Name, PackageFullName, InstallLocation, Publisher
+```
+
+<Accordion title="Detection Process">
+  1. Execute PowerShell `Get-AppxPackage` cmdlet
+  2. Parse XML or JSON output
+  3. Extract package metadata (name, publisher, version)
+  4. Determine installation scope (user vs. all-users)
+  5. Identify protected/non-removable packages
+  6. Create ApplicationUninstallerEntry objects
+</Accordion>
+
+<Note>
+  Some Windows Store apps are protected and cannot be uninstalled. BCU marks these appropriately.
+</Note>
+
+## Steam Application Detection
+
+Steam games are detected by parsing Steam library manifests.
+
+```csharp SteamFactory.cs
+// Steam library locations
+C:\Program Files (x86)\Steam\steamapps\
+<SteamLibrary>\steamapps\
+
+// Manifest files
+appmanifest_<AppID>.acf
+```
+
+<Steps>
+  <Step title="Locate Steam Installation">
+    Read Steam installation path from registry:
+    ```
+    HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam\InstallPath
+    ```
+  </Step>
+  
+  <Step title="Find Library Folders">
+    Parse `libraryfolders.vdf` to discover all Steam library locations
+  </Step>
+  
+  <Step title="Read Manifests">
+    Parse `.acf` manifest files for each game:
+    - App ID
+    - Game name
+    - Install directory
+    - Size on disk
+    - Last update timestamp
+  </Step>
+  
+  <Step title="Generate Uninstall Command">
+    Create Steam protocol uninstall URL:
+    ```
+    steam://uninstall/<AppID>
+    ```
+  </Step>
+</Steps>
+
+## Chocolatey Detection
+
+Chocolatey packages are detected from the Chocolatey package database.
+
+```powershell Chocolatey Query
+choco list --local-only
+```
+
+<Accordion title="Metadata Extraction">
+  For each package, BCU extracts:
+  
+  - Package name and version
+  - Install location
+  - Package metadata (description, author)
+  - Dependencies
+  - Uninstall command: `choco uninstall <package> -y`
+</Accordion>
+
+## Scoop Detection
+
+Scoop applications are detected by scanning Scoop's installation directory.
+
+```bash Scoop Locations
+~\scoop\apps\              # Default user installation
+C:\ProgramData\scoop\apps\  # Global installation
+```
+
+<Steps>
+  <Step title="Find Scoop Root">
+    Check environment variable `SCOOP` or default location `~\scoop`
+  </Step>
+  
+  <Step title="Enumerate Apps">
+    List directories in `apps` folder
+  </Step>
+  
+  <Step title="Read Manifests">
+    Parse JSON manifest files for metadata
+  </Step>
+  
+  <Step title="Generate Uninstall">
+    Create command: `scoop uninstall <app>`
+  </Step>
+</Steps>
+
+## Windows Features Detection
+
+```powershell Query Windows Features
+Get-WindowsOptionalFeature -Online | Where-Object {$_.State -eq "Enabled"}
+```
+
+<Note>
+  Windows Features are system components and require administrator privileges to modify.
+</Note>
+
+## Program Files Orphan Detection
+
+BCU scans Program Files directories to find applications without registry entries.
+
+```csharp DirectoryFactory.cs
+// Scanned directories
+C:\Program Files\
+C:\Program Files (x86)\
+```
+
+<Accordion title="Orphan Detection Logic">
+  1. Enumerate all subdirectories in Program Files
+  2. Look for common uninstaller executables:
+     - `uninstall.exe`
+     - `unins*.exe` (Inno Setup)
+     - `uninst.exe`
+     - `helper.exe --uninstall`
+  3. Check if directory has corresponding registry entry
+  4. If no registry entry found, mark as orphan
+  5. Attempt to identify installer type from executables
+  6. Generate potential uninstall command
+</Accordion>
+
+<Warning>
+  Orphaned applications may not uninstall cleanly. Use caution and review before removal.
+</Warning>
+
+## Concurrent Detection
+
+All factories run concurrently for fast detection:
+
+```csharp ApplicationUninstallerFactory.cs
+public static List<ApplicationUninstallerEntry> GetUninstallerEntries(
+    ListGenerationProgress progressCallback)
+{
+    var factories = new List<IUninstallerFactory>
+    {
+        new RegistryFactory(),
+        new StoreAppFactory(),
+        new SteamFactory(),
+        new ChocolateyFactory(),
+        // ... other factories
+    };
+    
+    // Run all factories in parallel
+    var tasks = factories.Select(f => 
+        Task.Run(() => f.GetUninstallerEntries(progressCallback))
+    ).ToArray();
+    
+    Task.WaitAll(tasks);
+    
+    // Combine and deduplicate results
+    return CombineAndDeduplicate(tasks.Select(t => t.Result));
+}
+```
+
+## Deduplication
+
+Multiple sources may report the same application. BCU uses intelligent deduplication:
+
+<Accordion title="Matching Criteria">
+  Applications are considered duplicates if they match on:
+  
+  1. **Exact ProductCode** (MSI GUID)
+  2. **Display Name + Publisher** (fuzzy match)
+  3. **Install Location** (same directory)
+  4. **Uninstall String** (same command)
+</Accordion>
+
+<Accordion title="Merging Strategy">
+  When duplicates are found:
+  
+  - Prefer MSI entries over registry entries
+  - Prefer entries with ProductCode
+  - Merge metadata from all sources
+  - Use most complete information available
+  - Keep QuietUninstallString if available from any source
+</Accordion>
+
+## Performance Optimization
+
+<CardGroup cols={2}>
+  <Card title="Parallel Execution" icon="gauge-high">
+    All factory classes run concurrently using Task-based parallelism
+  </Card>
+  <Card title="Caching" icon="database">
+    Results are cached to avoid repeated expensive operations
+  </Card>
+  <Card title="Lazy Loading" icon="hourglass-half">
+    Additional metadata loaded on-demand, not during initial scan
+  </Card>
+  <Card title="Registry Batching" icon="layer-group">
+    Registry reads are batched to minimize I/O operations
+  </Card>
+</CardGroup>
+
+## Configuration Options
+
+Users can enable/disable specific detection sources:
+
+```csharp Settings
+- EnableRegistryScanning
+- EnableStoreApps
+- EnableSteamDetection
+- EnableChocolateyDetection
+- EnableScoopDetection
+- EnableWindowsFeatures
+- EnableWindowsUpdates
+- EnableOculusDetection
+- EnableOrphanedProgramsSearch
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Uninstaller Types" icon="list" href="/developer/uninstaller-types">
+    Learn about different installer systems BCU supports
+  </Card>
+  <Card title="Helper Tools" icon="wrench" href="/developer/helper-tools">
+    Understand the helper applications used for detection
+  </Card>
+</CardGroup>

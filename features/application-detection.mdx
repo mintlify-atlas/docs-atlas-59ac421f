@@ -1,0 +1,495 @@
+---
+title: Application Detection
+description: How Bulk Crap Uninstaller discovers installed applications from multiple sources
+---
+
+## Overview
+
+BCU uses a comprehensive multi-source detection system to find installed applications. Unlike Windows' built-in "Apps & Features", BCU looks beyond the registry to detect applications from Windows Store, Steam, portable apps, and orphaned installations.
+
+## Detection Architecture
+
+BCU employs a factory pattern with specialized detectors for different application types:
+
+```csharp
+public static IList<ApplicationUninstallerEntry> GetUninstallerEntries(
+    ListGenerationProgress.ListGenerationCallback callback)
+{
+    const int totalStepCount = 8;
+    var currentStep = 1;
+
+    // 1. Find MSI products
+    var msiProducts = MsiTools.MsiEnumProducts().ToList();
+
+    // 2. Find stuff mentioned in registry
+    var registryFactory = new RegistryFactory(msiProducts);
+    var registryResults = registryFactory.GetUninstallerEntries(callback);
+
+    // 3. Look for entries on drives
+    var driveFactory = new DirectoryFactory(registryResults);
+    var driveResults = driveFactory.GetUninstallerEntries(callback);
+
+    // 4. Find apps from stores and other sources
+    var otherResults = GetMiscUninstallerEntries(callback);
+
+    // 5. Merge and deduplicate
+    MergeResults(mergedResults, otherResults, callback);
+    MergeResults(mergedResults, driveResults, callback);
+
+    return mergedResults;
+}
+```
+
+## Detection Sources
+
+<CardGroup cols={2}>
+  <Card title="Windows Registry" icon="database">
+    Primary source for traditionally installed applications
+  </Card>
+  <Card title="Windows Store" icon="windows">
+    UWP and modern Windows Store applications
+  </Card>
+  <Card title="Steam" icon="steam">
+    Games and applications from Steam platform
+  </Card>
+  <Card title="Chocolatey" icon="chocolate-bar">
+    Package manager installed applications
+  </Card>
+  <Card title="Scoop" icon="bucket">
+    Portable applications managed by Scoop
+  </Card>
+  <Card title="Oculus" icon="vr-cardboard">
+    VR applications from Oculus platform
+  </Card>
+  <Card title="Windows Features" icon="toggle-on">
+    Optional Windows features and components
+  </Card>
+  <Card title="Directory Scan" icon="folder-tree">
+    Orphaned apps found by scanning Program Files
+  </Card>
+</CardGroup>
+
+## Registry Detection
+
+The primary source for most applications is the Windows registry:
+
+<Tabs>
+  <Tab title="Registry Locations">
+    BCU scans multiple registry paths:
+
+    ```csharp
+    private static readonly string RegUninstallersKeyDirect =
+        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+    private static readonly string RegUninstallersKeyWow =
+        @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall";
+    ```
+
+    **32-bit Applications on 64-bit Windows**: Found in the Wow6432Node path
+    
+    **64-bit Applications**: Found in the direct path
+    
+    **Per-User Installations**: Scanned in both HKLM and HKCU hives
+  </Tab>
+  <Tab title="Registry Data Extraction">
+    BCU reads comprehensive information from registry keys:
+
+    ```csharp
+    private static ApplicationUninstallerEntry GetBasicInformation(
+        RegistryKey uninstallerKey)
+    {
+        return new ApplicationUninstallerEntry
+        {
+            RegistryPath = uninstallerKey.Name,
+            RegistryKeyName = uninstallerKey.GetKeyName(),
+            RawDisplayName = uninstallerKey.GetStringSafe("DisplayName"),
+            DisplayVersion = uninstallerKey.GetStringSafe("DisplayVersion"),
+            Publisher = uninstallerKey.GetStringSafe("Publisher"),
+            UninstallString = GetUninstallString(uninstallerKey),
+            QuietUninstallString = GetQuietUninstallString(uninstallerKey),
+            ModifyPath = uninstallerKey.GetStringSafe("ModifyPath"),
+            InstallLocation = uninstallerKey.GetStringSafe("InstallLocation"),
+            InstallSource = uninstallerKey.GetStringSafe("InstallSource"),
+            SystemComponent = Convert.ToInt32(
+                uninstallerKey.GetValue("SystemComponent", 0)) != 0,
+            DisplayIcon = uninstallerKey.GetStringSafe("DisplayIcon")
+        };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### MSI Product Detection
+
+Windows Installer (MSI) applications require special handling:
+
+```csharp
+// Enumerate all MSI products
+var msiProducts = MsiTools.MsiEnumProducts().ToList();
+
+// Check if entry is MSI-based
+if (ApplicationEntryTools.PathPointsToMsiExec(uninstallString) &&
+    MsiTools.MsiEnumProducts().All(g => !g.Equals(entry.BundleProviderKey)))
+{
+    // Product was uninstalled
+    CurrentStatus = UninstallStatus.Completed;
+}
+```
+
+<Note>
+**MSI Special Handling**: BCU re-enumerates MSI products during batch operations to detect when MSI applications are removed by other uninstallers.
+</Note>
+
+## Windows Store Apps
+
+Modern Windows Store applications are detected using PowerShell integration:
+
+```csharp
+public class StoreAppFactory : IIndependantUninstallerFactory
+{
+    private static string HelperPath { get; } = 
+        Path.Combine(UninstallToolsGlobalConfig.AssemblyLocation, 
+                     @"StoreAppHelper.exe");
+
+    public IList<ApplicationUninstallerEntry> GetUninstallerEntries(
+        ListGenerationProgress.ListGenerationCallback progressCallback)
+    {
+        var results = new List<ApplicationUninstallerEntry>();
+        if (!IsHelperAvailable()) return results;
+
+        var output = FactoryTools.StartHelperAndReadOutput(HelperPath, "/query");
+        
+        foreach (var data in FactoryTools.ExtractAppDataSetsFromHelperOutput(output))
+        {
+            var fullName = data["FullName"];
+            var result = new ApplicationUninstallerEntry
+            {
+                Comment = fullName,
+                RatingId = fullName.Substring(0, fullName.IndexOf("_")),
+                UninstallString = $"\"{HelperPath}\" /uninstall \"{fullName}\"",
+                RawDisplayName = data["DisplayName"],
+                Publisher = data["PublisherDisplayName"],
+                UninstallerKind = UninstallerType.StoreApp,
+                InstallLocation = data["InstalledLocation"],
+                IsProtected = Convert.ToBoolean(data["IsProtected"])
+            };
+            results.Add(result);
+        }
+        return results;
+    }
+}
+```
+
+<Accordion title="Store App Properties">
+- **FullName**: Complete package identity including version and architecture
+- **DisplayName**: User-friendly application name (may be localized)
+- **PublisherDisplayName**: Application publisher
+- **InstalledLocation**: Installation directory path
+- **IsProtected**: Whether the app is a system component
+- **Logo**: Application icon/logo path
+</Accordion>
+
+## Steam Applications
+
+Steam games and applications are detected through Steam's API:
+
+```csharp
+public class SteamFactory : IIndependantUninstallerFactory
+{
+    private static bool GetSteamInfo(out string steamLocation)
+    {
+        if (File.Exists(SteamHelperPath))
+        {
+            var output = FactoryTools.StartHelperAndReadOutput(
+                SteamHelperPath, "steam");
+            if (!string.IsNullOrEmpty(output) && Directory.Exists(output))
+            {
+                steamLocation = output.Trim().TrimEnd('\\', '/');
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public IList<ApplicationUninstallerEntry> GetUninstallerEntries(
+        ListGenerationProgress.ListGenerationCallback progressCallback)
+    {
+        var results = new List<ApplicationUninstallerEntry>();
+        if (!GetSteamInfo(out var steamLocation)) return results;
+
+        var output = FactoryTools.StartHelperAndReadOutput(
+            SteamHelperPath, "l /i");
+        
+        foreach (var data in FactoryTools.ExtractAppDataSetsFromHelperOutput(output))
+        {
+            if (!int.TryParse(data["AppId"], out var appId)) continue;
+
+            var entry = new ApplicationUninstallerEntry
+            {
+                DisplayName = data["Name"],
+                UninstallString = data["UninstallString"],
+                InstallLocation = data["InstallDirectory"],
+                UninstallerKind = UninstallerType.Steam,
+                RatingId = "Steam App " + appId.ToString("G")
+            };
+
+            if (long.TryParse(data["SizeOnDisk"], out var bytes))
+                entry.EstimatedSize = FileSize.FromBytes(bytes);
+
+            results.Add(entry);
+        }
+        return results;
+    }
+}
+```
+
+## Directory Scanner
+
+BCU can detect orphaned applications by scanning installation directories:
+
+<Tabs>
+  <Tab title="Scanning Process">
+    ```csharp
+    public class DirectoryFactory : IUninstallerFactory
+    {
+        public IList<ApplicationUninstallerEntry> GetUninstallerEntries(
+            ListGenerationProgress.ListGenerationCallback progressCallback)
+        {
+            var results = new List<ApplicationUninstallerEntry>();
+            
+            // Scan common installation directories
+            foreach (var programFilesDir in GetProgramFilesDirs())
+            {
+                foreach (var subDir in Directory.GetDirectories(programFilesDir))
+                {
+                    // Check if already known from registry
+                    if (AlreadyKnown(subDir)) continue;
+                    
+                    // Try to create entry from directory
+                    var entry = TryCreateFromDirectory(
+                        new DirectoryInfo(subDir));
+                    if (entry != null)
+                        results.Add(entry);
+                }
+            }
+            
+            return results;
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Orphan Detection">
+    Applications are marked as orphaned when:
+
+    - Found in Program Files but not in registry
+    - Contain executable files but no uninstaller
+    - Have characteristics of an application (folder structure, files)
+    - Not matched to any registered application
+
+    **Orphaned Flag**: `IsOrphaned = true`
+    
+    **Simple Delete**: Uninstaller type is set to `SimpleDelete` for folder removal
+  </Tab>
+</Tabs>
+
+## Supported Installer Types
+
+BCU detects and handles various installer technologies:
+
+<CardGroup cols={2}>
+  <Card title="Windows Installer (MSI)" icon="windows">
+    Standard Windows Installer packages with GUID-based identification
+  </Card>
+  <Card title="NSIS (Nullsoft)" icon="file-zipper">
+    Nullsoft Scriptable Install System with quiet uninstall detection
+  </Card>
+  <Card title="Inno Setup" icon="gear">
+    Inno Setup installers with silent parameter generation
+  </Card>
+  <Card title="InstallShield" icon="shield">
+    InstallShield installers with response file support
+  </Card>
+  <Card title="Wise Installer" icon="wand-magic-sparkles">
+    Wise Installation System packages
+  </Card>
+  <Card title="Custom Uninstallers" icon="screwdriver-wrench">
+    Application-specific uninstall executables
+  </Card>
+  <Card title="Simple Delete" icon="trash">
+    Direct folder deletion for portable/orphaned apps
+  </Card>
+  <Card title="PowerShell" icon="terminal">
+    PowerShell-based uninstall scripts (Store apps)
+  </Card>
+</CardGroup>
+
+### Uninstaller Type Detection
+
+BCU automatically identifies the installer type:
+
+```csharp
+public enum UninstallerType
+{
+    Unknown = 0,
+    Msiexec,
+    Nsis,
+    InnoSetup,
+    InstallShield,
+    SteamApp,
+    StoreApp,
+    Chocolatey,
+    Scoop,
+    WindowsFeature,
+    WindowsUpdate,
+    SimpleDelete,
+    PowerShell
+}
+```
+
+## Information Enrichment
+
+After initial detection, BCU enriches entries with additional information:
+
+<Accordion title="Certificate Detection">
+Extracts digital signature information:
+
+```csharp
+public X509Certificate2 GetCertificate()
+{
+    if (!_certificateGotten)
+    {
+        _certificateGotten = true;
+        _certificate = CertificateGetter.TryGetCertificate(this);
+        
+        if (_certificate != null)
+            _certificateValid = _certificate.Verify();
+    }
+    return _certificate;
+}
+```
+</Accordion>
+
+<Accordion title="Size Calculation">
+Determines installation size:
+
+- Reads `EstimatedSize` from registry (in KB)
+- Scans installation directory if not available
+- Uses fast size calculation for large directories
+- Caches results for performance
+</Accordion>
+
+<Accordion title="Icon Extraction">
+Gets application icons:
+
+1. Parse `DisplayIcon` registry value
+2. Extract icon from executable
+3. Look for .ico files in install directory
+4. Use default application icon as fallback
+</Accordion>
+
+<Accordion title="Executable Detection">
+Finds main application executables:
+
+```csharp
+internal string[] SortedExecutables { get; set; }
+
+public IEnumerable<string> GetSortedExecutables()
+{
+    if (SortedExecutables == null)
+        return Enumerable.Empty<string>();
+        
+    var output = SortedExecutables.AsEnumerable();
+    if (!string.IsNullOrEmpty(UninstallerFullFilename))
+        output = output.OrderBy(x => 
+            x.Equals(UninstallerFullFilename, 
+                    StringComparison.InvariantCultureIgnoreCase));
+    return output;
+}
+```
+</Accordion>
+
+<Accordion title="Quiet Uninstall String Generation">
+Generates silent uninstall commands:
+
+- **NSIS**: Adds `/S` parameter
+- **Inno Setup**: Adds `/VERYSILENT /SUPPRESSMSGBOXES`
+- **MSI**: Uses `msiexec /x {GUID} /qn`
+- **Custom**: Checks for common silent switches
+</Accordion>
+
+## Deduplication and Merging
+
+Multiple sources may detect the same application:
+
+```csharp
+internal static void MergeResults(
+    ICollection<ApplicationUninstallerEntry> baseEntries,
+    ICollection<ApplicationUninstallerEntry> newResults, 
+    ListGenerationProgress.ListGenerationCallback progressCallback)
+{
+    var newToAdd = new List<ApplicationUninstallerEntry>();
+    
+    foreach (var entry in newResults)
+    {
+        var matchedEntry = baseEntries
+            .Select(x => new { 
+                x, 
+                score = ApplicationEntryTools.AreEntriesRelated(x, entry) 
+            })
+            .Where(x => x.score >= 1)
+            .OrderByDescending(x => x.score)
+            .Select(x => x.x)
+            .FirstOrDefault();
+
+        if (matchedEntry != null)
+        {
+            // Merge information into existing entry
+            InfoAdder.CopyMissingInformation(matchedEntry, entry);
+            continue;
+        }
+
+        // Add as new entry
+        newToAdd.Add(entry);
+    }
+}
+```
+
+### Matching Algorithm
+
+Applications are matched based on:
+
+1. **Registry Key Name**: Exact match on GUID or key name
+2. **Install Location**: Same installation directory
+3. **Display Name + Publisher**: Similar name and same publisher
+4. **Bundle Provider Key**: Matching MSI product GUID
+
+## Caching System
+
+BCU caches detected application information:
+
+```csharp
+if (UninstallToolsGlobalConfig.UninstallerFactoryCache != null)
+{
+    ApplyCache(registryResults, 
+               UninstallToolsGlobalConfig.UninstallerFactoryCache, 
+               InfoAdder);
+}
+
+// After enrichment, update cache
+foreach (var entry in mergedResults)
+    UninstallToolsGlobalConfig.UninstallerFactoryCache.TryCacheItem(entry);
+```
+
+<Note>
+**Performance**: The cache significantly speeds up subsequent scans by storing expensive-to-calculate information like file sizes and certificates.
+</Note>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bulk Uninstall" href="/features/bulk-uninstall" icon="list-check">
+    Uninstalling detected applications in bulk
+  </Card>
+  <Card title="Export Lists" href="/features/export-import" icon="file-export">
+    Exporting detected application lists
+  </Card>
+</CardGroup>

@@ -1,0 +1,399 @@
+---
+title: Leftover Cleanup System
+description: Intelligent detection and removal of leftover files, folders, and registry entries after uninstallation
+---
+
+## Overview
+
+After uninstalling applications, many uninstallers leave behind files, folders, registry entries, and other remnants. BCU's junk cleanup system uses intelligent pattern matching and confidence scoring to detect and safely remove these leftovers.
+
+## How Junk Detection Works
+
+BCU employs multiple specialized scanners that look for different types of leftover data:
+
+```csharp
+public static IEnumerable<IJunkResult> FindJunk(
+    IEnumerable<ApplicationUninstallerEntry> targets,
+    ICollection<ApplicationUninstallerEntry> allUninstallers, 
+    ListGenerationProgress.ListGenerationCallback progressCallback)
+{
+    var scanners = ReflectionTools.GetTypesImplementingBase<IJunkCreator>()
+        .Attempt(Activator.CreateInstance)
+        .Cast<IJunkCreator>()
+        .ToList();
+
+    foreach (var junkCreator in scanners)
+    {
+        junkCreator.Setup(allUninstallers);
+    }
+
+    var results = new List<IJunkResult>();
+    foreach (var junkCreator in scanners)
+    {
+        foreach (var target in targetEntries)
+        {
+            results.AddRange(junkCreator.FindJunk(target));
+        }
+    }
+
+    return CleanUpResults(results);
+}
+```
+
+## Junk Scanner Types
+
+<CardGroup cols={2}>
+  <Card title="Registry Scanner" icon="database">
+    Finds leftover registry keys and values related to uninstalled applications
+  </Card>
+  <Card title="File System Scanner" icon="folder">
+    Detects orphaned directories in Program Files, AppData, and other common locations
+  </Card>
+  <Card title="Startup Entries" icon="rocket">
+    Identifies startup entries pointing to non-existent files
+  </Card>
+  <Card title="Shortcuts" icon="link">
+    Finds broken shortcuts in Start Menu and Desktop
+  </Card>
+  <Card title="Prefetch Files" icon="gauge">
+    Locates Windows prefetch files for uninstalled applications
+  </Card>
+  <Card title="Windows Error Reporting" icon="bug">
+    Detects crash reports from removed applications
+  </Card>
+</CardGroup>
+
+## Confidence System
+
+BCU uses a confidence scoring system to determine how likely each detected item is actually junk. This prevents false positives and accidental deletion of important files.
+
+### Confidence Levels
+
+```csharp
+public enum ConfidenceLevel
+{
+    Unknown = 0,
+    Bad = 5,
+    Questionable = 7,
+    Good = 9,
+    VeryGood = 12
+}
+```
+
+<Tabs>
+  <Tab title="Confidence Calculation">
+    Multiple factors contribute to the final confidence score:
+
+    ```csharp
+    internal static IEnumerable<ConfidenceRecord> GenerateConfidence(
+        string itemName, 
+        string itemParentPath, 
+        int level, 
+        ApplicationUninstallerEntry applicationUninstallerEntry)
+    {
+        var matchResult = MatchStringToProductName(applicationUninstallerEntry, itemName);
+
+        // Perfect name match
+        if (similarityToEntry < 2)
+            yield return ConfidenceRecords.ProductNamePerfectMatch;
+        else
+            yield return ConfidenceRecords.ProductNameDodgyMatch;
+
+        // Base rating according to path depth. 0 is best
+        yield return new ConfidenceRecord(2 - Math.Abs(level) * 2);
+
+        // Company name match
+        if (ItemNameEqualsCompanyName(applicationUninstallerEntry, itemName))
+            yield return ConfidenceRecords.ItemNameEqualsCompanyName;
+
+        // Location confidence
+        if (UninstallToolsGlobalConfig.IsKnownFolder(itemParentPath))
+            yield return ConfidenceRecords.DirectlyInsideKnownFolder;
+    }
+    ```
+  </Tab>
+  <Tab title="Scoring Factors">
+    **Name Matching (+12 to +8)**
+    - Perfect match with application name
+    - Fuzzy match with small differences
+    - Contains application name
+
+    **Path Depth (+2 to -4)**
+    - Items at expected depth get bonus
+    - Too deep or too shallow is suspicious
+
+    **Publisher Match (+4)**
+    - Folder name matches publisher name
+
+    **Known Location (+6)**
+    - In standard AppData, ProgramData, or Program Files
+
+    **Explicit Connection (+10)**
+    - Direct reference in registry or config files
+  </Tab>
+</Tabs>
+
+### String Matching Algorithm
+
+BCU uses the Sift4 algorithm for fuzzy string matching:
+
+```csharp
+internal static int MatchStringToProductName(
+    ApplicationUninstallerEntry applicationUninstallerEntry, 
+    string str)
+{
+    var productName = applicationUninstallerEntry.DisplayNameTrimmed.ToLowerInvariant();
+    str = str.Replace('_', ' ').ToLowerInvariant().Trim();
+    var lowestLength = Math.Min(productName.Length, str.Length);
+
+    // Don't match short strings
+    if (lowestLength <= 4)
+        return -1;
+
+    var result = Sift4.SimplestDistance(productName, str, 1);
+
+    // Strings match perfectly
+    if (result <= 1)
+        return result;
+
+    // Try with publisher name trimmed
+    var publisher = applicationUninstallerEntry.PublisherTrimmed.ToLower();
+    if (publisher.Length > 4 && productName.Contains(publisher))
+    {
+        var trimmedProductName = productName.Replace(publisher, "").Trim();
+        if (trimmedProductName.Length > 4)
+        {
+            var trimmedResult = Sift4.SimplestDistance(trimmedProductName, str, 1);
+            if (trimmedResult <= 1)
+                return trimmedResult;
+        }
+    }
+
+    // Hard cut-off if difference is more than a third
+    if (result < lowestLength / 3)
+        return result;
+
+    return -1;
+}
+```
+
+## Types of Junk
+
+<Accordion title="File System Junk">
+Leftover files and directories in various locations:
+
+- **Install Location**: Remnants in the original install directory
+- **AppData**: User-specific application data in `%APPDATA%` and `%LOCALAPPDATA%`
+- **ProgramData**: Shared application data in `%PROGRAMDATA%`
+- **Uninstaller Location**: Leftover uninstaller files
+- **Temp Folders**: Temporary files in Windows temp directories
+
+```csharp
+public class FileSystemJunk : JunkResultBase
+{
+    public DirectoryInfo Path { get; }
+    
+    public override void Delete()
+    {
+        Path.Delete(true);
+    }
+}
+```
+</Accordion>
+
+<Accordion title="Registry Junk">
+Leftover registry keys and values:
+
+- **Uninstall Keys**: Registry entries under `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall`
+- **Application Keys**: Custom registry keys under `HKLM\Software` and `HKCU\Software`
+- **Shared DLLs**: Orphaned shared DLL references
+- **File Associations**: File type associations for removed applications
+- **MUI Cache**: Display name cache entries
+
+```csharp
+public class RegistryKeyJunk : JunkResultBase
+{
+    public string FullName { get; }
+    
+    public override void Delete()
+    {
+        using var key = RegistryTools.OpenRegistryKey(ParentPath, true);
+        key?.DeleteSubKeyTree(SubKeyName);
+    }
+}
+```
+</Accordion>
+
+<Accordion title="Startup Entries">
+Orphaned startup items:
+
+- **Run Registry Keys**: Autostart entries in registry
+- **Startup Folder**: Shortcuts in Startup folders
+- **Scheduled Tasks**: Windows Task Scheduler entries
+- **Services**: Windows services that no longer exist
+
+```csharp
+public class StartupJunkNode : JunkResultBase
+{
+    public StartupEntryBase Entry { get; }
+    
+    public override void Delete()
+    {
+        Entry.StopService();
+        Entry.Disable();
+        Entry.Delete();
+    }
+}
+```
+</Accordion>
+
+<Accordion title="Shortcuts">
+Broken shortcuts pointing to non-existent files:
+
+- **Start Menu**: Application shortcuts in Start Menu
+- **Desktop**: Desktop shortcuts
+- **Quick Launch**: Quick launch shortcuts
+</Accordion>
+
+## Junk Cleanup Process
+
+### Automatic Scan
+
+After a bulk uninstall operation:
+
+```csharp
+if (MessageBoxes.LookForJunkQuestion())
+{
+    var junkRemoveTargetsQuery = from bulkUninstallEntry in status.AllUninstallersList
+                                 where bulkUninstallEntry.CurrentStatus == UninstallStatus.Completed
+                                       || bulkUninstallEntry.CurrentStatus == UninstallStatus.Invalid
+                                 select bulkUninstallEntry.UninstallerEntry;
+
+    SearchForAndRemoveJunk(junkRemoveTargetsQuery, allUninstallerList);
+}
+```
+
+### Manual Scan
+
+You can manually trigger junk scanning:
+
+1. Select one or more applications
+2. Go to **Tools** → **Advanced Uninstall**
+3. Review detected junk items
+4. Select items to remove
+5. Confirm deletion
+
+<Warning>
+Always review the junk scan results before deletion. While BCU's confidence system is accurate, it's wise to verify before removing registry keys or folders.
+</Warning>
+
+## Safety Features
+
+<CardGroup cols={2}>
+  <Card title="Duplicate Removal" icon="copy">
+    Identical junk entries are merged to prevent redundant operations
+  </Card>
+  <Card title="Prohibited Locations" icon="ban">
+    System folders like Windows, System32, and Program Files root are protected
+  </Card>
+  <Card title="Self-Protection" icon="shield-halved">
+    BCU never suggests removing its own files
+  </Card>
+  <Card title="Running Process Check" icon="circle-exclamation">
+    Warns if processes are using files marked for deletion
+  </Card>
+</CardGroup>
+
+### Protected Locations
+
+```csharp
+private static HashSet<string> GetProhibitedLocations()
+{
+    var results = new HashSet<string>();
+    
+    // Add all Windows special folders
+    AddRange(Enum.GetValues<Klocman.Native.CSIDL>()
+        .Attempt(WindowsTools.GetEnvironmentPath));
+    
+    // Add Windows 10+ known folders
+    AddRange(knownFolderstype.GetProperties()
+        .Attempt(p => ((Windows.Storage.StorageFolder)p.GetValue(null))!.Path));
+    
+    return results;
+}
+```
+
+## Program Files Orphan Scanner
+
+A specialized scanner for finding orphaned directories in Program Files:
+
+```csharp
+public void SearchForAndRemoveProgramFilesJunk(
+    IEnumerable<ApplicationUninstallerEntry> allUninstallers)
+{
+    var junk = new List<IJunkResult>();
+    var error = LoadingDialog.ShowDialog(null, 
+        Localisable.LoadingDialogTitleLookingForJunk,
+        x => junk.AddRange(JunkManager.FindProgramFilesJunk(
+            allUninstallers.Where(y => y.RegKeyStillExists()).ToList())));
+}
+```
+
+This scanner:
+- Scans all Program Files directories
+- Compares found folders to installed applications
+- Identifies folders without corresponding applications
+- Assigns confidence based on folder contents
+
+<Note>
+**Best Practice**: Run the Program Files orphan scanner periodically to clean up leftover folders from improperly uninstalled applications.
+</Note>
+
+## Filtering and Customization
+
+### Confidence Threshold
+
+By default, BCU shows all junk with confidence ≥ 0. You can adjust this:
+
+- **Show All**: Display even low-confidence matches (useful for thorough cleanup)
+- **Good and Above**: Only show items with Good or VeryGood confidence
+- **Custom Filter**: Set a specific confidence threshold
+
+### Similar Name Detection
+
+BCU prevents false positives when similar application names exist:
+
+```csharp
+internal static void TestForSimilarNames(
+    ApplicationUninstallerEntry thisUninstaller, 
+    IEnumerable<ApplicationUninstallerEntry> otherUninstallers,
+    ICollection<KeyValuePair<JunkResultBase, string>> createdJunk)
+{
+    var thisDisplayName = thisUninstaller.DisplayNameTrimmed;
+    
+    // Check if any other apps match the entries
+    var otherFiltered = otherUninstallers
+        .Where(x => x != thisUninstaller && 
+               !x.DisplayNameTrimmed.Contains(thisDisplayName))
+        .ToList();
+    
+    var matchingWithOther = createdJunk
+        .Where(x => otherFiltered.Any(y => 
+               y.DisplayNameTrimmed.Contains(x.Value)));
+    
+    // Apply negative confidence to matches with other apps
+    foreach (var sketchyJunk in matchingWithOther)
+        sketchyJunk.Key.Confidence.Add(ConfidenceRecords.UsedBySimilarNamedApp);
+}
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bulk Uninstall" href="/features/bulk-uninstall" icon="list-check">
+    Learn about bulk uninstallation operations
+  </Card>
+  <Card title="Application Detection" href="/features/application-detection" icon="magnifying-glass">
+    How BCU finds installed applications
+  </Card>
+</CardGroup>

@@ -1,0 +1,205 @@
+---
+title: Bulk Uninstallation
+description: Uninstall multiple applications simultaneously with intelligent task management and automation
+---
+
+## Overview
+
+BCU's bulk uninstallation feature allows you to select and uninstall multiple applications at once, dramatically reducing the time needed to clean up your system. The intelligent task scheduler optimizes the uninstall order and manages concurrent operations for maximum efficiency.
+
+## Selecting Applications
+
+<CardGroup cols={2}>
+  <Card title="Multi-Select" icon="check-double">
+    Select multiple applications using standard Windows selection methods (Ctrl+Click, Shift+Click)
+  </Card>
+  <Card title="Filter Selection" icon="filter">
+    Use filters to quickly select groups of applications by criteria like publisher or install date
+  </Card>
+  <Card title="Orphaned Apps" icon="box-open">
+    Detect and select orphaned applications that lack proper uninstallers
+  </Card>
+  <Card title="Protected Items" icon="shield">
+    System-protected applications are flagged and require confirmation before removal
+  </Card>
+</CardGroup>
+
+## Intelligent Task Sorting
+
+BCU automatically sorts uninstall tasks for optimal performance and safety:
+
+```csharp
+public static IEnumerable<T> SortIntelligently<T>(IEnumerable<T> entries, Func<T, BulkUninstallEntry> entryGetter)
+{
+    var query = from x in entries
+                let item = entryGetter(x)
+                orderby
+                    // For safety always run simple deletes last so that actual uninstallers have a chance to run
+                    item.UninstallerEntry.UninstallerKind == UninstallerType.SimpleDelete ascending,
+                    // Always run loud first so later user can have some time to watch cat pics
+                    item.IsSilentPossible ascending,
+                    // Updates usually get uninstalled by their parent uninstallers
+                    item.UninstallerEntry.IsUpdate ascending,
+                    // SysCmps and Protected usually get uninstalled by their parent, user-visible uninstallers
+                    item.UninstallerEntry.SystemComponent ascending,
+                    item.UninstallerEntry.IsProtected ascending,
+                    // Calculate number of digits and divide it by 4 to create buckets of sizes
+                    Math.Round(Math.Floor(Math.Log10(item.UninstallerEntry.EstimatedSize.GetKbSize(true)) + 1) / 4) descending,
+                    // Prioritize Msi uninstallers because they tend to take the longest
+                    item.UninstallerEntry.UninstallerKind == UninstallerType.Msiexec descending
+                select x;
+    return query;
+}
+```
+
+### Sorting Priority
+
+<Accordion title="1. Uninstaller Type Safety">
+Simple delete operations are always scheduled last to ensure proper uninstallers run first, preventing issues where files are deleted before the uninstaller can clean up properly.
+</Accordion>
+
+<Accordion title="2. Silent vs Interactive">
+Interactive ("loud") uninstallers run first so you can handle them while silent uninstallers process in the background.
+</Accordion>
+
+<Accordion title="3. Update Dependencies">
+Updates are processed before their parent applications since they're typically removed by the main uninstaller.
+</Accordion>
+
+<Accordion title="4. System Components">
+System components and protected apps are deprioritized as they're often dependencies of user applications.
+</Accordion>
+
+<Accordion title="5. Size and Complexity">
+Larger applications and MSI installers are prioritized since they typically take longer to uninstall.
+</Accordion>
+
+## Concurrent Operations
+
+BCU can run multiple uninstallers simultaneously to speed up the process:
+
+<Tabs>
+  <Tab title="Concurrent Settings">
+    ```csharp
+    var status = UninstallManager.CreateBulkUninstallTask(taskEntries, GetConfiguration(quiet));
+    status.OneLoudLimit = _settings.UninstallConcurrentOneLoud;
+    status.ConcurrentUninstallerCount = _settings.UninstallConcurrency
+        ? _settings.UninstallConcurrentMaxCount
+        : 1;
+    status.Start();
+    ```
+
+    **ConcurrentUninstallerCount**: Maximum number of simultaneous uninstall operations
+    
+    **OneLoudLimit**: Maximum number of interactive (non-silent) uninstallers that can run at once
+  </Tab>
+  <Tab title="Safety Controls">
+    - **MSI Serialization**: Windows Installer operations are automatically serialized to prevent conflicts
+    - **Process Monitoring**: BCU tracks child processes to ensure uninstalls complete fully
+    - **Deadlock Detection**: Stuck uninstallers are automatically detected and terminated
+  </Tab>
+</Tabs>
+
+## Protection System
+
+<Warning>
+BCU protects critical system applications from accidental removal. Protected items require explicit confirmation.
+</Warning>
+
+```csharp
+if (!_settings.AdvancedDisableProtection)
+{
+    var protectedTargets = targetList.Where(x => x.IsProtected).ToList();
+    if (MessageBoxes.ProtectedItemsWarningQuestion(
+        protectedTargets.Select(x => x.DisplayName).ToArray()) == 
+        MessageBoxes.PressedButton.Cancel)
+        return;
+
+    targetList.RemoveAll(protectedTargets);
+}
+```
+
+### Protected Categories
+
+- **Windows Store Apps**: System-level Windows Store applications
+- **System Components**: Applications marked with `SystemComponent=1` in registry
+- **Web Browsers**: Installed web browsers to prevent accidental removal
+- **BCU Itself**: Bulk Crap Uninstaller prevents self-removal during batch operations
+
+## Process Management
+
+<CardGroup cols={2}>
+  <Card title="Running Process Detection" icon="process">
+    BCU automatically detects processes related to applications being uninstalled and prompts you to close them
+  </Card>
+  <Card title="Child Process Tracking" icon="sitemap">
+    Monitors spawned child processes to ensure uninstallers complete all cleanup tasks
+  </Card>
+  <Card title="Automatic Termination" icon="stop">
+    Stuck processes can be automatically killed after detecting prolonged inactivity
+  </Card>
+  <Card title="System Restore Points" icon="clock-rotate-left">
+    Optional system restore point creation before bulk operations begin
+  </Card>
+</CardGroup>
+
+## Batch Operation Workflow
+
+1. **Selection**: Choose applications to uninstall
+2. **Validation**: BCU checks for protected items and running processes
+3. **Sorting**: Tasks are intelligently ordered for optimal execution
+4. **System Restore**: Optional restore point creation
+5. **Pre-Commands**: Run custom commands before uninstall (if configured)
+6. **Execution**: Uninstallers run with automatic monitoring
+7. **Junk Cleanup**: Scan for and remove leftover files and registry entries
+8. **Post-Commands**: Run custom commands after uninstall (if configured)
+
+<Note>
+**Performance Tip**: Enable concurrent uninstallation in settings for significantly faster bulk operations. Most systems can handle 3-5 concurrent uninstallers safely.
+</Note>
+
+## Advanced Features
+
+### Uninstall from Directory
+
+Detect and uninstall applications directly from their installation folders:
+
+```csharp
+public void UninstallFromDirectory(IEnumerable<ApplicationUninstallerEntry> allUninstallers)
+{
+    var result = MessageBoxes.SelectFolder(Localisable.UninstallFromDirectory_FolderBrowse);
+    if (result == null) return;
+
+    var items = new List<ApplicationUninstallerEntry>();
+    LoadingDialog.ShowDialog(MessageBoxes.DefaultOwner, 
+        Localisable.UninstallFromDirectory_ScanningTitle,
+        _ => items.AddRange(DirectoryFactory.TryCreateFromDirectory(
+            new DirectoryInfo(result), Array.Empty<string>())));
+}
+```
+
+### Retry on Failure
+
+<Tabs>
+  <Tab title="Automatic Retry">
+    Failed uninstalls can automatically retry with different parameters:
+
+    - First attempt uses quiet/silent mode if available
+    - Second attempt uses interactive mode on failure
+    - Retry behavior is configurable in settings
+  </Tab>
+  <Tab title="Manual Retry">
+    You can manually retry failed uninstalls from the progress window by selecting the failed entry and choosing "Retry".
+  </Tab>
+</Tabs>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Quiet Mode" href="/features/unattended-mode" icon="volume-off">
+    Learn about silent and unattended uninstallation
+  </Card>
+  <Card title="Junk Cleanup" href="/features/junk-cleanup" icon="broom">
+    Automatic leftover detection after uninstall
+  </Card>
+</CardGroup>

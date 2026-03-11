@@ -1,0 +1,300 @@
+---
+title: Translating BCUninstaller
+description: How to help translate Bulk Crap Uninstaller into your language
+---
+
+## Overview
+
+Bulk Crap Uninstaller uses .resx resource files for translations, making it easy to add support for new languages. All translators use the ResxTranslator tool, which greatly simplifies the translation process.
+
+## Translation Tool
+
+<Card title="ResxTranslator" icon="language" href="https://github.com/HakanL/resxtranslator">
+  A specialized tool designed for translating .resx resource files. It provides a user-friendly interface that saves significant time compared to editing files manually.
+</Card>
+
+### Why ResxTranslator?
+
+- Visual side-by-side comparison of source and translated strings
+- Easy navigation through all translation files
+- Bulk translation capabilities
+- Automatic saving and validation
+- Used by all BCUninstaller translators
+
+## Getting Started
+
+<Steps>
+  <Step title="Download ResxTranslator">
+    Download the latest version from the [ResxTranslator releases page](https://github.com/HakanL/resxtranslator/releases).
+    
+    Extract the tool to a convenient location on your computer.
+  </Step>
+  
+  <Step title="Get the Translation Files">
+    Choose one of these methods:
+    
+    **Option A: For Git Users**
+    
+    If you're familiar with Git and GitHub:
+    
+    1. Fork the repository
+    2. Create a new branch for your translation
+    3. Clone your fork locally
+    
+    ```bash
+    git clone https://github.com/YOUR-USERNAME/Bulk-Crap-Uninstaller.git
+    git checkout -b translation/your-language
+    ```
+    
+    **Option B: Download Translation Pack**
+    
+    If you're not familiar with Git:
+    
+    1. Go to the [releases page](https://github.com/Klocman/Bulk-Crap-Uninstaller/releases)
+    2. Download the latest translation pack
+    3. Extract the files to a folder
+  </Step>
+  
+  <Step title="Open in ResxTranslator">
+    1. Launch ResxTranslator
+    2. Click **File > Open directory**
+    3. Navigate to the extracted translation pack or your cloned repository
+    4. Select the source directory containing the .resx files
+  </Step>
+</Steps>
+
+## Translation Process
+
+<Steps>
+  <Step title="Navigate the Files">
+    The left tree view shows all available resource files. Click on any file to open it in the right panel.
+    
+    <Note>
+      Translate all files except `Resources.resx` - this file should not be translated.
+    </Note>
+  </Step>
+  
+  <Step title="Select Your Language Column">
+    Find or create the column for your language:
+    
+    **If your language exists:**
+    - Use the checkboxes below the list to show/hide language columns
+    - Your language code (e.g., "de" for German, "fr" for French) will already be present
+    
+    **If your language doesn't exist:**
+    
+    1. Click **Languages > Add > Your Language Code**
+    2. If your code isn't listed, click **Languages > Add > More Languages**
+    3. Select your language from the extended list
+  </Step>
+  
+  <Step title="Choose the Right Language Code">
+    Use neutral language codes when possible:
+    
+    **Preferred (neutral):**
+    - `en` instead of `en-GB` or `en-US`
+    - `ru` instead of `ru-RU`
+    - `de` instead of `de-DE`
+    - `fr` instead of `fr-FR`
+    
+    **Use specific codes only when necessary:**
+    - `zh-CN` vs `zh-TW` (Simplified vs Traditional Chinese)
+    - `pt-BR` vs `pt-PT` (Brazilian vs European Portuguese)
+    
+    <Info>
+      To see all available language codes, click **Languages > Add > More Languages**
+    </Info>
+  </Step>
+  
+  <Step title="Translate Strings">
+    For each resource string:
+    
+    1. Read the source text (usually English)
+    2. Enter your translation in your language column
+    3. Maintain any placeholders (e.g., `{0}`, `{1}`)
+    4. Keep formatting characters (e.g., `\n` for newlines)
+    
+    <Warning>
+      Don't translate:
+      - Variable names in curly braces: `{0}`, `{variableName}`
+      - Format specifiers: `%s`, `%d`
+      - Special characters like `\n`, `\t`
+    </Warning>
+  </Step>
+  
+  <Step title="Save Your Work">
+    Regularly save your progress:
+    
+    - Press `Ctrl+S` or
+    - Click **File > Save all modified**
+    
+    <Note>
+      Save frequently to avoid losing work if the application crashes.
+    </Note>
+  </Step>
+</Steps>
+
+## Translation Tips
+
+### Context Matters
+
+Some strings may be unclear without context:
+
+- Look at nearby strings for context clues
+- Check how the string is used in the application
+- When in doubt, ask in a GitHub issue
+
+### Maintain Consistency
+
+- Use the same translation for repeated terms
+- Keep a consistent tone (formal vs. informal)
+- Match the style of existing translations
+
+### Technical Terms
+
+- Some technical terms may be better left in English
+- Use commonly accepted translations for technical concepts
+- Be consistent with Windows terminology in your language
+
+### String Length
+
+- Translated strings may be longer than the original
+- Try to keep translations reasonably concise
+- Very long strings may affect UI layout
+
+## Submitting Your Translation
+
+After completing your translation, you need to submit it back to the project.
+
+### Option A: Create a Pull Request (Git Users)
+
+<Steps>
+  <Step title="Commit Your Changes">
+    ```bash
+    git add .
+    git commit -m "Add [Language] translation"
+    ```
+  </Step>
+  
+  <Step title="Push to Your Fork">
+    ```bash
+    git push origin translation/your-language
+    ```
+  </Step>
+  
+  <Step title="Create Pull Request">
+    1. Go to the original repository on GitHub
+    2. Click "New Pull Request"
+    3. Select your fork and branch
+    4. Describe your translation
+  </Step>
+</Steps>
+
+### Option B: Send Translation Files
+
+If you're not using Git:
+
+1. Compress the folder you modified into a .zip file
+2. Send it via:
+   - The [feedback form](http://klocmansoftware.weebly.com/feedback--contact.html)
+   - GitHub issue (if you have an account)
+   - Email to the maintainer (if you have the address)
+
+## Translation File Structure
+
+### Resource Files to Translate
+
+Translate all `.resx` files **except**:
+
+❌ `Resources.resx` - Contains embedded resources, not translatable strings
+
+### Common Files
+
+You'll typically find resource files in these locations:
+
+- `BulkCrapUninstaller/Properties/` - Main application strings
+- `UninstallTools/Properties/` - Core library strings
+- Various component folders - Component-specific strings
+
+## Language Code Reference
+
+<AccordionGroup>
+  <Accordion title="Common Language Codes">
+    - `de` - German
+    - `es` - Spanish
+    - `fr` - French
+    - `it` - Italian
+    - `ja` - Japanese
+    - `ko` - Korean
+    - `pl` - Polish
+    - `pt` - Portuguese
+    - `ru` - Russian
+    - `zh` - Chinese
+  </Accordion>
+  
+  <Accordion title="Region-Specific Codes">
+    Use these when the language significantly differs by region:
+    
+    - `en-GB` - British English
+    - `en-US` - American English
+    - `pt-BR` - Brazilian Portuguese
+    - `pt-PT` - European Portuguese
+    - `zh-CN` - Simplified Chinese
+    - `zh-TW` - Traditional Chinese
+  </Accordion>
+  
+  <Accordion title="Finding Your Code">
+    If your language isn't listed:
+    
+    1. Use [ISO 639-1 codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+    2. Or check ResxTranslator's language list: **Languages > Add > More Languages**
+  </Accordion>
+</AccordionGroup>
+
+## Quality Checklist
+
+Before submitting your translation:
+
+- [ ] All files translated (except Resources.resx)
+- [ ] Placeholders (`{0}`, `{1}`) preserved
+- [ ] No untranslated strings remain
+- [ ] Translations tested in the application (if possible)
+- [ ] Consistent terminology throughout
+- [ ] Proper grammar and spelling
+- [ ] Appropriate formality level
+
+## Getting Help
+
+If you need assistance with translation:
+
+<CardGroup cols={2}>
+  <Card title="Open an Issue" icon="github" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/issues">
+    Ask questions or report translation-related issues
+  </Card>
+  
+  <Card title="Contact Form" icon="envelope" href="http://klocmansoftware.weebly.com/feedback--contact.html">
+    Use the feedback form for direct communication
+  </Card>
+</CardGroup>
+
+## Recognition
+
+Your translation efforts help make BCUninstaller accessible to users worldwide. All translators are credited in:
+
+- Release notes
+- Application about dialog
+- Project documentation
+
+Thank you for contributing to the BCUninstaller community!
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Contributing Guide" icon="code-pull-request" href="/developer/contributing">
+    General contribution guidelines
+  </Card>
+  
+  <Card title="Building from Source" icon="hammer" href="/developer/building">
+    Test your translations in the app
+  </Card>
+</CardGroup>

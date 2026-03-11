@@ -1,0 +1,293 @@
+---
+title: "Uninstaller Types"
+description: "Understanding the different uninstaller types supported by BCUninstaller"
+---
+
+Bulk Crap Uninstaller supports a wide variety of uninstaller types, each with its own characteristics, detection methods, and handling strategies.
+
+## Supported Uninstaller Types
+
+BCU recognizes and handles the following uninstaller types:
+
+<CardGroup cols={2}>
+  <Card title="MSI (Windows Installer)" icon="box">
+    Microsoft's standard installation technology with comprehensive management features
+  </Card>
+  <Card title="NSIS" icon="file-zipper">
+    Nullsoft Scriptable Install System, popular for open-source software
+  </Card>
+  <Card title="Inno Setup" icon="screwdriver-wrench">
+    Free installer for Windows programs, widely used by developers
+  </Card>
+  <Card title="InstallShield" icon="shield">
+    Commercial installer used by enterprise applications
+  </Card>
+  <Card title="Windows Store Apps" icon="microsoft">
+    Universal Windows Platform (UWP) and packaged apps from Microsoft Store
+  </Card>
+  <Card title="Steam" icon="steam">
+    Games and applications distributed through the Steam platform
+  </Card>
+  <Card title="Chocolatey" icon="cube">
+    Package manager for Windows, similar to apt-get or yum
+  </Card>
+  <Card title="Oculus" icon="vr-cardboard">
+    Applications installed through Oculus VR platform
+  </Card>
+</CardGroup>
+
+## UninstallerType Enumeration
+
+BCU uses an enum to categorize uninstallers. Here's the complete definition from the source code:
+
+```csharp UninstallerType.cs
+public enum UninstallerType
+{
+    Unknown = 0,
+    Msiexec,
+    InnoSetup,
+    Steam,
+    Nsis,
+    InstallShield,
+    SdbInst,
+    WindowsFeature,
+    WindowsUpdate,
+    StoreApp,
+    SimpleDelete,
+    Chocolatey,
+    Oculus,
+    PowerShell
+}
+```
+
+## Type-Specific Characteristics
+
+### MSI (Msiexec)
+
+<Accordion title="Features">
+  - **Detection**: Product codes in registry, MSI database queries
+  - **Silent Uninstall**: Native support via `/qn` flag
+  - **Logging**: Built-in MSI logging with `/l*v` flag
+  - **Repair**: Can repair installations
+  - **Rollback**: Automatic transaction support
+  - **Clean Removal**: Generally leaves minimal leftovers
+</Accordion>
+
+```bash Silent Uninstall Command
+msiexec.exe /x {ProductCode} /qn /norestart /l*v "C:\uninstall.log"
+```
+
+### NSIS (Nullsoft Scriptable Install System)
+
+<Accordion title="Features">
+  - **Detection**: Uninstaller executable signature patterns
+  - **Silent Uninstall**: `/S` switch (capital S is important)
+  - **Custom Scripts**: Installer-defined uninstall logic
+  - **Common Usage**: Open-source projects, freeware
+  - **Leftovers**: Variable, depends on installer script quality
+</Accordion>
+
+```bash Silent Uninstall Command
+"C:\Program Files\App\uninstall.exe" /S
+```
+
+### Inno Setup
+
+<Accordion title="Features">
+  - **Detection**: Inno Setup registry keys and uninstaller signatures
+  - **Silent Uninstall**: `/SILENT` or `/VERYSILENT` switches
+  - **Logging**: `/LOG` switch for detailed logs
+  - **Common Usage**: Widely used in Windows freeware and commercial software
+  - **Clean Removal**: Generally good, especially with `/VERYSILENT`
+</Accordion>
+
+```bash Silent Uninstall Command
+"C:\Program Files\App\unins000.exe" /VERYSILENT /NORESTART /LOG="C:\uninstall.log"
+```
+
+### Windows Store Apps (StoreApp)
+
+<Accordion title="Features">
+  - **Detection**: PowerShell `Get-AppxPackage` cmdlet
+  - **Removal Method**: PowerShell `Remove-AppxPackage` cmdlet
+  - **Scope**: Per-user and all-users packages
+  - **Protection**: Some apps are protected and cannot be removed
+  - **Clean Removal**: Excellent, containerized app model
+</Accordion>
+
+```powershell Remove Store App
+Get-AppxPackage -Name "PackageName" | Remove-AppxPackage
+```
+
+### Steam
+
+<Accordion title="Features">
+  - **Detection**: Steam library manifest files
+  - **Removal Method**: Steam client uninstall command
+  - **Clean Removal**: Excellent, managed by Steam client
+  - **Dependency**: Requires Steam client to be installed
+</Accordion>
+
+```bash Uninstall Steam Game
+steam://uninstall/AppID
+```
+
+### Chocolatey
+
+<Accordion title="Features">
+  - **Detection**: Chocolatey package database
+  - **Removal Method**: `choco uninstall` command
+  - **Silent Uninstall**: Native silent operation
+  - **Dependencies**: Handles dependency removal
+  - **Clean Removal**: Excellent, package manager handles cleanup
+</Accordion>
+
+```bash Uninstall Chocolatey Package
+choco uninstall package-name -y
+```
+
+### InstallShield
+
+<Accordion title="Features">
+  - **Detection**: Registry keys and uninstaller signatures
+  - **Silent Uninstall**: Various switches (`/s`, `/quiet`, response files)
+  - **Enterprise Usage**: Common in commercial software
+  - **Complexity**: Can be complex with custom scripts
+  - **Leftovers**: Variable quality
+</Accordion>
+
+### Windows Features
+
+<Accordion title="Features">
+  - **Detection**: DISM or PowerShell feature queries
+  - **Removal Method**: DISM commands or PowerShell
+  - **System Integration**: Deep OS integration
+  - **Restart Required**: Often requires system restart
+  - **Clean Removal**: Excellent, managed by Windows
+</Accordion>
+
+```powershell Disable Windows Feature
+Disable-WindowsOptionalFeature -Online -FeatureName "FeatureName" -NoRestart
+```
+
+### Windows Update
+
+<Accordion title="Features">
+  - **Detection**: Windows Update API
+  - **Removal Method**: WUSA or DISM commands
+  - **System Updates**: Handles KB updates and patches
+  - **Caution Required**: Removing updates can destabilize system
+</Accordion>
+
+### Oculus
+
+<Accordion title="Features">
+  - **Detection**: Oculus library manifest files
+  - **Removal Method**: Oculus client uninstall command
+  - **VR Applications**: Games and apps from Oculus Store
+  - **Dependency**: Requires Oculus software
+</Accordion>
+
+### PowerShell
+
+<Accordion title="Features">
+  - **Detection**: PowerShell-based uninstallers
+  - **Removal Method**: Execute PowerShell script
+  - **Flexibility**: Can handle complex custom uninstall logic
+  - **Modern**: Increasingly common in modern software
+</Accordion>
+
+### SimpleDelete
+
+<Accordion title="Features">
+  - **Detection**: Portable apps without formal uninstaller
+  - **Removal Method**: Delete application directory
+  - **Use Case**: Portable applications, extracted archives
+  - **Caution**: May leave registry entries or user data
+</Accordion>
+
+## Detection Priority
+
+BCU uses a priority system when multiple uninstaller types could apply:
+
+1. **MSI Product Code** - Highest priority, most reliable
+2. **Package Managers** (Chocolatey, Steam, Store Apps) - Well-managed uninstalls
+3. **Known Installers** (NSIS, Inno Setup, InstallShield) - Pattern-based detection
+4. **Registry Keys** - Standard Windows uninstaller registry
+5. **Simple Delete** - Fallback for portable apps
+
+## Type Detection Methods
+
+<Tabs>
+  <Tab title="Signature Analysis">
+    BCU examines the uninstaller executable to identify patterns:
+    
+    - **NSIS**: Looks for NSIS-specific strings and resources
+    - **Inno Setup**: Checks for Inno Setup signatures
+    - **InstallShield**: Identifies InstallShield engine files
+  </Tab>
+  
+  <Tab title="Registry Analysis">
+    Examines registry keys for type indicators:
+    
+    - **MSI**: `WindowsInstaller` registry key present
+    - **Product Codes**: GUID format indicates MSI
+    - **Publisher Information**: Some publishers use specific installer types
+  </Tab>
+  
+  <Tab title="External Tools">
+    Uses helper applications for specific types:
+    
+    - **StoreAppHelper**: Queries Windows Store apps
+    - **SteamHelper**: Reads Steam library files
+    - **OculusHelper**: Queries Oculus library
+  </Tab>
+</Tabs>
+
+## Silent Uninstall Generation
+
+BCU attempts to generate silent uninstall commands for each type:
+
+```csharp Example Logic
+public string GetQuietUninstallString()
+{
+    switch (UninstallerKind)
+    {
+        case UninstallerType.Msiexec:
+            return $"msiexec.exe /x {BundleProviderKey} /qn /norestart";
+        
+        case UninstallerType.Nsis:
+            return $"{UninstallString} /S";
+        
+        case UninstallerType.InnoSetup:
+            return $"{UninstallString} /VERYSILENT /NORESTART";
+        
+        // ... other types
+    }
+}
+```
+
+## Best Practices
+
+<Note>
+  **MSI is Preferred**: When possible, use MSI-based installations for easiest management and cleanest removal.
+</Note>
+
+<Warning>
+  **Test Unknown Types**: Always test uninstallation of unknown or custom installer types in a safe environment first.
+</Warning>
+
+<Tip>
+  **Junk Cleanup**: Even well-behaved uninstallers may leave some leftovers. Use BCU's junk cleanup feature after uninstallation.
+</Tip>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Detection Methods" icon="magnifying-glass" href="/developer/detection-methods">
+    Learn how BCU discovers applications
+  </Card>
+  <Card title="Helper Tools" icon="wrench" href="/developer/helper-tools">
+    Understand the helper applications used for specific types
+  </Card>
+</CardGroup>

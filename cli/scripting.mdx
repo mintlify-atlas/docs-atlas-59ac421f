@@ -1,0 +1,1058 @@
+---
+title: Scripting & Automation
+description: Real-world examples and best practices for automating BCU-console in scripts and workflows
+---
+
+## Overview
+
+BCU-console is designed for automation and can be integrated into various scripting environments. This guide provides practical examples for common automation scenarios.
+
+## Script Templates
+
+<CardGroup cols={2}>
+  <Card title="Batch Scripts" icon="terminal">
+    Traditional Windows batch files for simple automation tasks
+  </Card>
+  <Card title="PowerShell" icon="code">
+    Modern PowerShell scripts with error handling and logging
+  </Card>
+  <Card title="Task Scheduler" icon="clock">
+    Scheduled automation using Windows Task Scheduler
+  </Card>
+  <Card title="Enterprise Deployment" icon="building">
+    SCCM, Intune, and Group Policy integration examples
+  </Card>
+</CardGroup>
+
+## Basic Automation Patterns
+
+### Simple Unattended Uninstall
+
+The most basic automation: uninstall applications silently without user interaction.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+echo Starting automated uninstall...
+
+BCU-console uninstall "C:\Scripts\bloatware.bcul" /U /Q
+
+if %ERRORLEVEL% EQU 0 (
+    echo Uninstall completed successfully
+) else (
+    echo Uninstall failed with error code %ERRORLEVEL%
+)
+
+pause
+```
+
+```powershell PowerShell
+Write-Host "Starting automated uninstall..." -ForegroundColor Cyan
+
+$result = Start-Process -FilePath "BCU-console" `
+    -ArgumentList "uninstall", "C:\Scripts\bloatware.bcul", "/U", "/Q" `
+    -Wait -PassThru -NoNewWindow
+
+if ($result.ExitCode -eq 0) {
+    Write-Host "Uninstall completed successfully" -ForegroundColor Green
+} else {
+    Write-Error "Uninstall failed with error code $($result.ExitCode)"
+}
+```
+
+</CodeGroup>
+
+### With Logging
+
+Capture console output for audit trails and troubleshooting.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+set LOGFILE=C:\Logs\BCU_%DATE:~-4,4%%DATE:~-10,2%%DATE:~-7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.log
+set LOGFILE=%LOGFILE: =0%
+
+echo %DATE% %TIME% - Starting uninstall >> "%LOGFILE%"
+
+BCU-console uninstall "C:\Scripts\bloatware.bcul" /U /Q /V >> "%LOGFILE%" 2>&1
+
+if %ERRORLEVEL% EQU 0 (
+    echo %DATE% %TIME% - Uninstall completed successfully >> "%LOGFILE%"
+) else (
+    echo %DATE% %TIME% - Uninstall failed with error %ERRORLEVEL% >> "%LOGFILE%"
+)
+
+echo Log saved to: %LOGFILE%
+```
+
+```powershell PowerShell
+$logPath = "C:\Logs"
+$logFile = Join-Path $logPath "BCU_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+# Ensure log directory exists
+if (-not (Test-Path $logPath)) {
+    New-Item -ItemType Directory -Path $logPath | Out-Null
+}
+
+# Start logging
+Start-Transcript -Path $logFile -Append
+
+Write-Host "Starting uninstall at $(Get-Date)"
+
+$result = Start-Process -FilePath "BCU-console" `
+    -ArgumentList "uninstall", "C:\Scripts\bloatware.bcul", "/U", "/Q", "/V" `
+    -Wait -PassThru -NoNewWindow
+
+Write-Host "Uninstall completed with exit code: $($result.ExitCode)"
+
+Stop-Transcript
+
+Write-Host "Log saved to: $logFile" -ForegroundColor Cyan
+```
+
+</CodeGroup>
+
+### With Error Handling
+
+Robust error handling for production environments.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+setlocal enabledelayedexpansion
+
+set "BCUL_FILE=C:\Scripts\bloatware.bcul"
+set "EMAIL_ON_ERROR=admin@company.com"
+
+echo Checking if uninstall list exists...
+if not exist "%BCUL_FILE%" (
+    echo ERROR: Uninstall list not found: %BCUL_FILE%
+    exit /b 87
+)
+
+echo Starting uninstall process...
+BCU-console uninstall "%BCUL_FILE%" /U /Q
+
+set ERROR_CODE=%ERRORLEVEL%
+
+if %ERROR_CODE% EQU 0 (
+    echo SUCCESS: Uninstall completed
+    exit /b 0
+) else if %ERROR_CODE% EQU 1 (
+    echo ERROR: Invalid arguments
+    exit /b 1
+) else if %ERROR_CODE% EQU 13 (
+    echo ERROR: Unexpected system error
+    exit /b 13
+) else if %ERROR_CODE% EQU 87 (
+    echo ERROR: Invalid syntax or missing file
+    exit /b 87
+) else if %ERROR_CODE% EQU 1223 (
+    echo WARNING: Operation cancelled by user
+    exit /b 1223
+) else (
+    echo ERROR: Unknown error code %ERROR_CODE%
+    exit /b %ERROR_CODE%
+)
+```
+
+```powershell PowerShell
+$bcuPath = "BCU-console"
+$listPath = "C:\Scripts\bloatware.bcul"
+$emailOnError = "admin@company.com"
+
+function Send-ErrorEmail {
+    param([string]$ErrorMessage)
+    
+    # Email sending logic here
+    Write-Host "Would send email to $emailOnError: $ErrorMessage" -ForegroundColor Yellow
+}
+
+try {
+    # Verify BCU-console is available
+    if (-not (Get-Command $bcuPath -ErrorAction SilentlyContinue)) {
+        throw "BCU-console not found in PATH"
+    }
+    
+    # Verify list file exists
+    if (-not (Test-Path $listPath)) {
+        throw "Uninstall list not found: $listPath"
+    }
+    
+    Write-Host "Starting uninstall process..." -ForegroundColor Cyan
+    
+    $process = Start-Process -FilePath $bcuPath `
+        -ArgumentList "uninstall", $listPath, "/U", "/Q" `
+        -Wait -PassThru -NoNewWindow
+    
+    switch ($process.ExitCode) {
+        0 { 
+            Write-Host "SUCCESS: Uninstall completed" -ForegroundColor Green
+            exit 0
+        }
+        1 { 
+            $msg = "Invalid arguments"
+            Write-Error $msg
+            Send-ErrorEmail $msg
+            exit 1
+        }
+        13 { 
+            $msg = "Unexpected system error during uninstall"
+            Write-Error $msg
+            Send-ErrorEmail $msg
+            exit 13
+        }
+        87 { 
+            $msg = "Invalid syntax or missing file"
+            Write-Error $msg
+            Send-ErrorEmail $msg
+            exit 87
+        }
+        1223 { 
+            Write-Warning "Operation cancelled by user"
+            exit 1223
+        }
+        default {
+            $msg = "Unknown error code: $($process.ExitCode)"
+            Write-Error $msg
+            Send-ErrorEmail $msg
+            exit $process.ExitCode
+        }
+    }
+}
+catch {
+    $msg = "Script error: $($_.Exception.Message)"
+    Write-Error $msg
+    Send-ErrorEmail $msg
+    exit 1
+}
+```
+
+</CodeGroup>
+
+## Common Automation Scenarios
+
+### Scenario 1: Enterprise Bloatware Removal
+
+Automatic removal of unwanted software on new workstations.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+echo ========================================
+echo  Enterprise Bloatware Removal Script
+echo ========================================
+echo.
+
+set "SCRIPT_DIR=%~dp0"
+set "LIST_FILE=%SCRIPT_DIR%bloatware.bcul"
+set "LOG_DIR=C:\IT\Logs\BCU"
+set "LOG_FILE=%LOG_DIR%\Bloatware_Removal_%COMPUTERNAME%_%DATE:~-4%%DATE:~-10,2%%DATE:~-7,2%.log"
+
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
+
+echo %DATE% %TIME% - Starting bloatware removal on %COMPUTERNAME% >> "%LOG_FILE%"
+echo Computer: %COMPUTERNAME% >> "%LOG_FILE%"
+echo User: %USERNAME% >> "%LOG_FILE%"
+echo. >> "%LOG_FILE%"
+
+echo Running BCU-console...
+BCU-console uninstall "%LIST_FILE%" /U /Q /J=VeryGood >> "%LOG_FILE%" 2>&1
+
+set RESULT=%ERRORLEVEL%
+
+if %RESULT% EQU 0 (
+    echo %DATE% %TIME% - SUCCESS: Bloatware removal completed >> "%LOG_FILE%"
+    echo.
+    echo Bloatware removed successfully!
+) else (
+    echo %DATE% %TIME% - ERROR: Exit code %RESULT% >> "%LOG_FILE%"
+    echo.
+    echo ERROR: Bloatware removal failed. Check log: %LOG_FILE%
+)
+
+echo.
+echo Log file: %LOG_FILE%
+echo.
+pause
+
+exit /b %RESULT%
+```
+
+```powershell PowerShell
+<#
+.SYNOPSIS
+    Enterprise Bloatware Removal Script
+.DESCRIPTION
+    Automatically removes unwanted software from workstations using BCU-console
+.NOTES
+    Requires BCU-console.exe in PATH or same directory
+#>
+
+param(
+    [string]$ListFile = "$PSScriptRoot\bloatware.bcul",
+    [string]$LogDir = "C:\IT\Logs\BCU",
+    [switch]$WithJunkCleanup = $true
+)
+
+# Setup logging
+$logFile = Join-Path $LogDir "Bloatware_Removal_$($env:COMPUTERNAME)_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+if (-not (Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+}
+
+Start-Transcript -Path $logFile
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Enterprise Bloatware Removal Script" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Computer: $($env:COMPUTERNAME)"
+Write-Host "User: $($env:USERNAME)"
+Write-Host "Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host "List File: $ListFile"
+Write-Host ""
+
+try {
+    # Verify list file
+    if (-not (Test-Path $ListFile)) {
+        throw "Uninstall list not found: $ListFile"
+    }
+    
+    # Build arguments
+    $arguments = @("uninstall", $ListFile, "/U", "/Q")
+    if ($WithJunkCleanup) {
+        $arguments += "/J=VeryGood"
+    }
+    
+    Write-Host "Starting BCU-console..." -ForegroundColor Yellow
+    
+    $process = Start-Process -FilePath "BCU-console" `
+        -ArgumentList $arguments `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($process.ExitCode -eq 0) {
+        Write-Host ""
+        Write-Host "SUCCESS: Bloatware removal completed!" -ForegroundColor Green
+        $exitCode = 0
+    } else {
+        Write-Host ""
+        Write-Error "Bloatware removal failed with exit code: $($process.ExitCode)"
+        $exitCode = $process.ExitCode
+    }
+}
+catch {
+    Write-Error "Script error: $($_.Exception.Message)"
+    $exitCode = 1
+}
+finally {
+    Write-Host ""
+    Write-Host "Log file: $logFile" -ForegroundColor Cyan
+    Stop-Transcript
+}
+
+exit $exitCode
+```
+
+</CodeGroup>
+
+### Scenario 2: Software Inventory Collection
+
+Regular inventory collection for compliance and asset management.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+setlocal
+
+set "INVENTORY_DIR=\\FileServer\IT\Inventory"
+set "COMPUTER_FILE=%INVENTORY_DIR%\%COMPUTERNAME%_apps.xml"
+
+echo Collecting software inventory for %COMPUTERNAME%...
+
+BCU-console export "%COMPUTER_FILE%" /Q
+
+if %ERRORLEVEL% EQU 0 (
+    echo Inventory exported successfully to:
+    echo %COMPUTER_FILE%
+) else (
+    echo ERROR: Failed to export inventory
+    exit /b %ERRORLEVEL%
+)
+```
+
+```powershell PowerShell
+<#
+.SYNOPSIS
+    Software Inventory Collection
+.DESCRIPTION
+    Exports installed software list to central repository
+#>
+
+param(
+    [string]$InventoryPath = "\\FileServer\IT\Inventory",
+    [switch]$IncludeTimestamp = $true
+)
+
+# Build filename
+$filename = $env:COMPUTERNAME
+if ($IncludeTimestamp) {
+    $filename += "_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+}
+$filename += "_apps.xml"
+
+$inventoryFile = Join-Path $InventoryPath $filename
+
+Write-Host "Collecting software inventory for $($env:COMPUTERNAME)..." -ForegroundColor Cyan
+
+try {
+    # Verify network path is accessible
+    if (-not (Test-Path $InventoryPath)) {
+        throw "Inventory path not accessible: $InventoryPath"
+    }
+    
+    # Export inventory
+    $process = Start-Process -FilePath "BCU-console" `
+        -ArgumentList "export", $inventoryFile, "/Q" `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($process.ExitCode -eq 0) {
+        Write-Host "SUCCESS: Inventory exported to:" -ForegroundColor Green
+        Write-Host $inventoryFile -ForegroundColor White
+        
+        # Get file size
+        $fileInfo = Get-Item $inventoryFile
+        Write-Host "File size: $([math]::Round($fileInfo.Length/1KB, 2)) KB" -ForegroundColor Gray
+        
+        exit 0
+    } else {
+        throw "Export failed with exit code: $($process.ExitCode)"
+    }
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+```
+
+</CodeGroup>
+
+### Scenario 3: Pre-Deployment Cleanup
+
+Remove old software versions before deploying new ones.
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+echo ========================================
+echo  Pre-Deployment Cleanup
+echo ========================================
+echo.
+
+set "OLD_VERSION_LIST=C:\Deploy\old-versions.bcul"
+set "NEW_INSTALLER=C:\Deploy\NewApp_v2.0.exe"
+
+echo Step 1: Removing old versions...
+BCU-console uninstall "%OLD_VERSION_LIST%" /U /Q /J=VeryGood
+
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Failed to remove old versions
+    exit /b %ERRORLEVEL%
+)
+
+echo.
+echo Step 2: Installing new version...
+start /wait "" "%NEW_INSTALLER%" /S
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo SUCCESS: Deployment completed!
+) else (
+    echo.
+    echo ERROR: Installation failed
+    exit /b %ERRORLEVEL%
+)
+```
+
+```powershell PowerShell
+<#
+.SYNOPSIS
+    Pre-Deployment Cleanup and Installation
+.DESCRIPTION
+    Removes old software versions and installs new version
+#>
+
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$OldVersionList,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$NewInstaller,
+    
+    [string]$InstallerArguments = "/S"
+)
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Pre-Deployment Cleanup" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+try {
+    # Verify files exist
+    if (-not (Test-Path $OldVersionList)) {
+        throw "Uninstall list not found: $OldVersionList"
+    }
+    if (-not (Test-Path $NewInstaller)) {
+        throw "Installer not found: $NewInstaller"
+    }
+    
+    # Step 1: Remove old versions
+    Write-Host "Step 1: Removing old versions..." -ForegroundColor Yellow
+    
+    $uninstall = Start-Process -FilePath "BCU-console" `
+        -ArgumentList "uninstall", $OldVersionList, "/U", "/Q", "/J=VeryGood" `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($uninstall.ExitCode -ne 0) {
+        throw "Failed to remove old versions (exit code: $($uninstall.ExitCode))"
+    }
+    
+    Write-Host "Old versions removed successfully" -ForegroundColor Green
+    Write-Host ""
+    
+    # Step 2: Install new version
+    Write-Host "Step 2: Installing new version..." -ForegroundColor Yellow
+    
+    $install = Start-Process -FilePath $NewInstaller `
+        -ArgumentList $InstallerArguments `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($install.ExitCode -ne 0) {
+        throw "Installation failed (exit code: $($install.ExitCode))"
+    }
+    
+    Write-Host ""
+    Write-Host "SUCCESS: Deployment completed!" -ForegroundColor Green
+    exit 0
+}
+catch {
+    Write-Host ""
+    Write-Error $_.Exception.Message
+    exit 1
+}
+```
+
+</CodeGroup>
+
+### Scenario 4: Scheduled Maintenance
+
+Regular cleanup of temporary software and trial versions.
+
+```powershell PowerShell - Task Scheduler Script
+<#
+.SYNOPSIS
+    Scheduled Maintenance Script
+.DESCRIPTION
+    Runs weekly to remove temporary software and trial versions
+.NOTES
+    Schedule with: schtasks /create /tn "BCU Maintenance" /tr "powershell.exe -File maintenance.ps1" /sc weekly /d SUN /st 02:00
+#>
+
+$ErrorActionPreference = "Stop"
+
+# Configuration
+$config = @{
+    ListFile = "C:\IT\Scripts\BCU\maintenance.bcul"
+    LogDir = "C:\IT\Logs\BCU\Maintenance"
+    EmailOnError = $true
+    EmailTo = "it-alerts@company.com"
+    SmtpServer = "smtp.company.com"
+}
+
+# Setup logging
+$logFile = Join-Path $config.LogDir "Maintenance_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+if (-not (Test-Path $config.LogDir)) {
+    New-Item -ItemType Directory -Path $config.LogDir -Force | Out-Null
+}
+
+Start-Transcript -Path $logFile
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  BCU Scheduled Maintenance" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host "Computer: $($env:COMPUTERNAME)"
+Write-Host ""
+
+try {
+    # Verify list file exists
+    if (-not (Test-Path $config.ListFile)) {
+        throw "Maintenance list not found: $($config.ListFile)"
+    }
+    
+    # Run uninstall
+    Write-Host "Running maintenance uninstall..." -ForegroundColor Yellow
+    
+    $process = Start-Process -FilePath "BCU-console" `
+        -ArgumentList "uninstall", $config.ListFile, "/U", "/Q", "/J" `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($process.ExitCode -eq 0) {
+        Write-Host "Maintenance completed successfully" -ForegroundColor Green
+        $success = $true
+    } else {
+        throw "Maintenance failed with exit code: $($process.ExitCode)"
+    }
+}
+catch {
+    Write-Error $_.Exception.Message
+    $success = $false
+    
+    # Send error email if configured
+    if ($config.EmailOnError) {
+        $emailParams = @{
+            To = $config.EmailTo
+            From = "bcu-maintenance@company.com"
+            Subject = "BCU Maintenance Failed on $($env:COMPUTERNAME)"
+            Body = "Maintenance task failed at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`nError: $($_.Exception.Message)`n`nLog: $logFile"
+            SmtpServer = $config.SmtpServer
+        }
+        
+        try {
+            Send-MailMessage @emailParams
+        } catch {
+            Write-Error "Failed to send email: $($_.Exception.Message)"
+        }
+    }
+}
+finally {
+    Write-Host ""
+    Write-Host "Completed: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    Write-Host "Log: $logFile" -ForegroundColor Cyan
+    Stop-Transcript
+}
+
+exit ($success ? 0 : 1)
+```
+
+## Windows Task Scheduler Integration
+
+### Create Scheduled Task (Command Line)
+
+```batch Create Task
+REM Run every Sunday at 2:00 AM
+schtasks /create /tn "BCU Weekly Maintenance" ^
+    /tr "\"C:\IT\Scripts\BCU\maintenance.bat\"" ^
+    /sc weekly /d SUN /st 02:00 ^
+    /ru SYSTEM /rl HIGHEST /f
+
+REM Run at system startup
+schtasks /create /tn "BCU Bloatware Removal" ^
+    /tr "\"C:\IT\Scripts\BCU\bloatware-removal.bat\"" ^
+    /sc onstart /delay 0005:00 ^
+    /ru SYSTEM /rl HIGHEST /f
+
+REM Run daily inventory export
+schtasks /create /tn "BCU Daily Inventory" ^
+    /tr "powershell.exe -ExecutionPolicy Bypass -File C:\IT\Scripts\BCU\inventory.ps1" ^
+    /sc daily /st 03:00 ^
+    /ru SYSTEM /f
+```
+
+### Create Scheduled Task (PowerShell)
+
+```powershell PowerShell Task Creation
+# Weekly maintenance task
+$action = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-ExecutionPolicy Bypass -File C:\IT\Scripts\BCU\maintenance.ps1"
+
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 2am
+
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
+
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+
+Register-ScheduledTask -TaskName "BCU Weekly Maintenance" `
+    -Action $action `
+    -Trigger $trigger `
+    -Principal $principal `
+    -Settings $settings `
+    -Description "Weekly cleanup of temporary software using BCU-console" `
+    -Force
+
+Write-Host "Scheduled task created successfully" -ForegroundColor Green
+```
+
+## Enterprise Deployment Integration
+
+### Microsoft Endpoint Configuration Manager (SCCM)
+
+```powershell SCCM Package Script
+<#
+.SYNOPSIS
+    SCCM Package Script for BCU Bloatware Removal
+.DESCRIPTION
+    Deploy as SCCM application or package
+.NOTES
+    Detection Method: Check for completion marker file
+#>
+
+$ErrorActionPreference = "Stop"
+
+# Paths
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$bcuPath = Join-Path $scriptPath "BCU-console.exe"
+$listPath = Join-Path $scriptPath "bloatware.bcul"
+$markerPath = "C:\ProgramData\Company\BCU\bloatware-removed.marker"
+$logPath = "C:\ProgramData\Company\BCU\Logs"
+
+# Setup logging
+$logFile = Join-Path $logPath "SCCM_Deploy_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+if (-not (Test-Path $logPath)) {
+    New-Item -ItemType Directory -Path $logPath -Force | Out-Null
+}
+
+Start-Transcript -Path $logFile
+
+try {
+    Write-Host "Starting SCCM BCU deployment"
+    Write-Host "Computer: $($env:COMPUTERNAME)"
+    Write-Host "User: $($env:USERNAME)"
+    
+    # Check if already deployed
+    if (Test-Path $markerPath) {
+        $markerDate = (Get-Item $markerPath).LastWriteTime
+        Write-Host "Already deployed on $markerDate"
+        
+        # Re-run if marker is older than 30 days
+        if ((Get-Date).AddDays(-30) -gt $markerDate) {
+            Write-Host "Marker is old, re-running deployment"
+        } else {
+            Write-Host "Skipping deployment"
+            exit 0
+        }
+    }
+    
+    # Run BCU-console
+    $process = Start-Process -FilePath $bcuPath `
+        -ArgumentList "uninstall", $listPath, "/U", "/Q", "/J" `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($process.ExitCode -eq 0) {
+        Write-Host "Deployment successful"
+        
+        # Create marker file
+        $markerDir = Split-Path -Parent $markerPath
+        if (-not (Test-Path $markerDir)) {
+            New-Item -ItemType Directory -Path $markerDir -Force | Out-Null
+        }
+        
+        Set-Content -Path $markerPath -Value (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        
+        exit 0
+    } else {
+        throw "BCU-console failed with exit code: $($process.ExitCode)"
+    }
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+finally {
+    Stop-Transcript
+}
+```
+
+### Microsoft Intune (PowerShell Script Deployment)
+
+```powershell Intune Deployment Script
+<#
+.SYNOPSIS
+    Intune Win32 App Script
+.DESCRIPTION
+    Deploy BCU bloatware removal as Intune Win32 app
+.NOTES
+    Package with Microsoft Win32 Content Prep Tool
+    Detection: Registry key HKLM\SOFTWARE\Company\BCU\BloatwareRemoved
+#>
+
+$ErrorActionPreference = "Stop"
+
+# Configuration
+$bcuPath = "$PSScriptRoot\BCU-console.exe"
+$listPath = "$PSScriptRoot\bloatware.bcul"
+$registryPath = "HKLM:\SOFTWARE\Company\BCU"
+$logPath = "$env:ProgramData\Company\BCU\Logs"
+
+# Setup logging
+$logFile = Join-Path $logPath "Intune_Deploy_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+if (-not (Test-Path $logPath)) {
+    New-Item -ItemType Directory -Path $logPath -Force | Out-Null
+}
+
+Start-Transcript -Path $logFile
+
+try {
+    Write-Host "Starting Intune BCU deployment" -ForegroundColor Cyan
+    Write-Host "Device: $($env:COMPUTERNAME)"
+    Write-Host "User: $($env:USERNAME)"
+    Write-Host ""
+    
+    # Verify files exist
+    if (-not (Test-Path $bcuPath)) {
+        throw "BCU-console.exe not found: $bcuPath"
+    }
+    if (-not (Test-Path $listPath)) {
+        throw "Uninstall list not found: $listPath"
+    }
+    
+    # Run BCU-console
+    Write-Host "Executing BCU-console..." -ForegroundColor Yellow
+    
+    $process = Start-Process -FilePath $bcuPath `
+        -ArgumentList "uninstall", $listPath, "/U", "/Q", "/J=VeryGood" `
+        -Wait -PassThru -NoNewWindow
+    
+    if ($process.ExitCode -ne 0) {
+        throw "BCU-console failed with exit code: $($process.ExitCode)"
+    }
+    
+    Write-Host "BCU-console completed successfully" -ForegroundColor Green
+    Write-Host ""
+    
+    # Create detection registry key
+    Write-Host "Creating detection registry key..." -ForegroundColor Yellow
+    
+    if (-not (Test-Path $registryPath)) {
+        New-Item -Path $registryPath -Force | Out-Null
+    }
+    
+    Set-ItemProperty -Path $registryPath -Name "BloatwareRemoved" -Value (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    Set-ItemProperty -Path $registryPath -Name "Version" -Value "1.0"
+    
+    Write-Host "Deployment completed successfully" -ForegroundColor Green
+    exit 0
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+finally {
+    Write-Host ""
+    Write-Host "Log: $logFile" -ForegroundColor Cyan
+    Stop-Transcript
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Always Test First" icon="flask">
+    **Never use unattended mode without thorough testing**
+    
+    1. Run without `/U` flag first to see what will be uninstalled
+    2. Test on a non-production machine
+    3. Verify the uninstall list is specific enough to avoid false positives
+    4. Review logs after test runs
+    
+    ```powershell
+    # Test mode - prompts for confirmation
+    BCU-console uninstall test.bcul /Q /V
+    
+    # After verification, run unattended
+    BCU-console uninstall test.bcul /U /Q
+    ```
+  </Accordion>
+  
+  <Accordion title="Use Logging" icon="file-lines">
+    **Always log operations for audit trails and troubleshooting**
+    
+    - Redirect output to log files
+    - Include timestamps in log filenames
+    - Store logs in a central location
+    - Implement log rotation to prevent disk space issues
+    
+    ```powershell
+    # Good logging practice
+    $logFile = "C:\Logs\BCU_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+    Start-Transcript -Path $logFile
+    
+    # ... BCU operations ...
+    
+    Stop-Transcript
+    ```
+  </Accordion>
+  
+  <Accordion title="Check Return Codes" icon="circle-check">
+    **Always verify operation success via return codes**
+    
+    - Check `$ERRORLEVEL` (batch) or `$LASTEXITCODE` (PowerShell)
+    - Implement appropriate error handling
+    - Send alerts on failures
+    - Don't proceed with dependent operations if BCU fails
+    
+    ```powershell
+    $result = Start-Process BCU-console -ArgumentList @(...) -Wait -PassThru
+    
+    if ($result.ExitCode -ne 0) {
+        # Handle error
+        Send-Alert "BCU failed with code $($result.ExitCode)"
+        exit 1
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Use Junk Cleanup Carefully" icon="triangle-exclamation">
+    **Start with VeryGood confidence level**
+    
+    - Only use `/J=VeryGood` for automated tasks
+    - Never use lower confidence levels in unattended mode
+    - Test junk cleanup results before deploying widely
+    - Monitor for false positives
+    
+    ```bash
+    # Safe for automation
+    BCU-console uninstall apps.bcul /U /Q /J=VeryGood
+    
+    # Too risky for automation
+    BCU-console uninstall apps.bcul /U /Q /J=Questionable
+    ```
+  </Accordion>
+  
+  <Accordion title="Verify File Paths" icon="folder-open">
+    **Always validate paths before execution**
+    
+    - Check if .bcul files exist before running
+    - Verify BCU-console.exe is accessible
+    - Ensure output directories exist for exports
+    - Use absolute paths when possible
+    
+    ```powershell
+    if (-not (Test-Path $bcuListFile)) {
+        Write-Error "List file not found: $bcuListFile"
+        exit 87
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Schedule Appropriately" icon="clock">
+    **Run during maintenance windows**
+    
+    - Schedule during off-hours (e.g., 2-4 AM)
+    - Allow sufficient time for completion
+    - Avoid running during backups or other maintenance
+    - Consider user logon/logoff times
+    
+    ```powershell
+    # Good: Sunday 2 AM
+    $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 2am
+    
+    # Bad: Peak business hours
+    # $trigger = New-ScheduledTaskTrigger -Daily -At 2pm
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Common Pitfalls
+
+<Warning>
+**Avoid These Common Mistakes**
+
+1. **Using `/U` without testing**: Always test interactively first
+2. **No error handling**: Scripts should check return codes
+3. **Missing logging**: You'll need logs when something goes wrong
+4. **Overly broad uninstall lists**: Be specific to avoid removing important software
+5. **Running during business hours**: Schedule during maintenance windows
+6. **No network path validation**: Check UNC paths before using them
+7. **Ignoring junk cleanup warnings**: Don't use confidence levels below VeryGood in automation
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Exit Code 1 - Invalid Arguments" icon="circle-xmark">
+    **Cause**: Command syntax error or invalid junk level
+    
+    **Solutions**:
+    - Verify command syntax matches documentation
+    - Check that switches are spelled correctly (/Q, /U, /V, /J)
+    - Ensure junk level is valid (VeryGood, Good, Questionable, Bad, Unknown)
+    
+    ```powershell
+    # Wrong
+    BCU-console uninstall apps.bcul /J=Medium
+    
+    # Correct
+    BCU-console uninstall apps.bcul /J=Good
+    ```
+  </Accordion>
+  
+  <Accordion title="Exit Code 87 - Invalid Syntax" icon="file-slash">
+    **Cause**: Missing file or invalid path
+    
+    **Solutions**:
+    - Verify .bcul file exists at specified path
+    - Use absolute paths instead of relative paths
+    - Check file permissions
+    - Ensure filename is provided for export command
+    
+    ```powershell
+    # Verify file before running
+    if (Test-Path "C:\Lists\apps.bcul") {
+        BCU-console uninstall "C:\Lists\apps.bcul" /U /Q
+    } else {
+        Write-Error "List file not found"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Exit Code 1223 - User Cancelled" icon="hand">
+    **Cause**: User pressed 'N' at confirmation prompt
+    
+    **Solutions**:
+    - Use `/U` flag to skip confirmations
+    - Or ensure user understands they need to press 'Y'
+    
+    ```bash
+    # Avoid prompts in automation
+    BCU-console uninstall apps.bcul /U /Q
+    ```
+  </Accordion>
+  
+  <Accordion title="No Applications Matched" icon="magnifying-glass">
+    **Cause**: Uninstall list doesn't match any installed applications
+    
+    **Solutions**:
+    - Run `BCU-console list` to see what's installed
+    - Verify the .bcul file was created correctly
+    - Check if target applications are already uninstalled
+    - Ensure .bcul file was created on same architecture (x86/x64)
+    
+    ```bash
+    # Check what's currently installed
+    BCU-console list /Q > current-apps.txt
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="CLI Overview" icon="book" href="/cli/overview">
+    Learn about BCU-console features and use cases
+  </Card>
+  <Card title="Command Reference" icon="terminal" href="/cli/commands">
+    Complete documentation of all commands and flags
+  </Card>
+</CardGroup>

@@ -1,0 +1,640 @@
+---
+title: CLI Commands
+description: Complete reference for all BCU-console commands, flags, and parameters
+---
+
+## Command Syntax
+
+BCU-console uses the following general syntax:
+
+```bash
+BCU-console <command> [arguments] [switches]
+```
+
+All switches are case-insensitive and can be specified in any order.
+
+## help - Display Help
+
+Show the help screen with all available commands and switches.
+
+### Syntax
+
+```bash
+BCU-console help
+BCU-console /?
+```
+
+### Example Output
+
+```text
+BCU-console [help | /?] - Show help (this screen)
+
+BCU-console uninstall [drive:][path]filename [/Q] [/U] [/V] [/J=<Level>] - Uninstall applications.
+BCU-console export [drive:][path]filename [/Q] [/U] [/V] - Export installed application data to xml file.
+BCU-console list [/Q] [/U] [/V] - Display a list of installed applications.
+
+Switches:
+ /Q             - Use quiet uninstallers wherever possible
+ /U             - Unattended mode (do not ask user for confirmation)
+ /J=<Level>     - Attempt to clean up leftover "junk" after uninstall
+ /V             - Verbose logging mode
+
+Return codes:
+ 0      - The operation completed successfully.
+ 1      - Invalid arguments.
+ 1223   - The operation was canceled by the user.
+```
+
+## uninstall
+
+Uninstall one or more applications using a .bcul uninstall list file.
+
+### Syntax
+
+```bash
+BCU-console uninstall [drive:][path]filename [/Q] [/U] [/V] [/J=<Level>]
+```
+
+### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `[drive:][path]filename` | Yes | Path to the .bcul uninstall list file that specifies which applications to uninstall |
+
+### Switches
+
+| Switch | Description | Default |
+|--------|-------------|----------|
+| `/Q` | Use quiet (silent) uninstallers wherever possible | Off (use loud uninstallers) |
+| `/U` | Unattended mode - do not ask user for confirmation | Off (prompt for confirmation) |
+| `/V` | Verbose logging mode - show detailed information | Off (normal output) |
+| `/J` or `/J=<Level>` | Clean up leftover junk after uninstall. If no level specified, defaults to VeryGood | Off (no junk cleanup) |
+
+### Junk Cleanup Levels
+
+The `/J` switch accepts the following confidence levels:
+
+<AccordionGroup>
+  <Accordion title="VeryGood (Recommended)" icon="shield-check">
+    **Safest option** - Only removes registry entries and files with very high confidence that they are leftover junk. This is the default if you use `/J` without specifying a level.
+    
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /J=VeryGood
+    # or simply
+    BCU-console uninstall C:\Lists\apps.bcul /J
+    ```
+  </Accordion>
+  
+  <Accordion title="Good" icon="shield">
+    **Moderate risk** - Removes items with good confidence. May include some files that could potentially be shared with other applications.
+    
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /J=Good
+    ```
+  </Accordion>
+  
+  <Accordion title="Questionable" icon="triangle-exclamation">
+    **High risk** - Removes items that might still be in use by other applications. Use with extreme caution.
+    
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /J=Questionable
+    ```
+  </Accordion>
+  
+  <Accordion title="Bad" icon="exclamation">
+    **Very high risk** - May remove important data. Only use if you fully understand the consequences.
+    
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /J=Bad
+    ```
+  </Accordion>
+  
+  <Accordion title="Unknown" icon="skull">
+    **Extreme risk** - Not recommended. May cause system instability or data loss.
+    
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /J=Unknown
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Examples
+
+<CodeGroup>
+
+```bash Interactive (Default)
+# User will be prompted to confirm before uninstalling
+BCU-console uninstall C:\Lists\bloatware.bcul
+```
+
+```bash Quiet Mode
+# Use silent uninstallers, still prompts for confirmation
+BCU-console uninstall C:\Lists\bloatware.bcul /Q
+```
+
+```bash Unattended Mode
+# No user prompts, runs completely automated
+BCU-console uninstall C:\Lists\bloatware.bcul /U /Q
+```
+
+```bash With Junk Cleanup
+# Uninstall and remove leftover files with VeryGood confidence
+BCU-console uninstall C:\Lists\bloatware.bcul /Q /J
+```
+
+```bash Full Automation with Logging
+# Unattended, quiet, verbose logging, junk cleanup
+BCU-console uninstall C:\Lists\bloatware.bcul /U /Q /V /J=VeryGood
+```
+
+```bash Relative Path
+# Can use relative paths from current directory
+BCU-console uninstall .\lists\apps.bcul /Q
+```
+
+</CodeGroup>
+
+### Example Output
+
+<CodeGroup>
+
+```text Normal Output
+BCU-console, Version=5.x.x.x, Culture=neutral, PublicKeyToken=null
+
+Starting bulk uninstall...
+Looking for applications...
+Found 247 applications.
+3 application(s) were matched by the list: Adobe Flash Player; Java 8 Update 291; WinRAR 6.02
+These applications will now be uninstalled PERMANENTLY.
+Do you want to continue? [Y]es/[N]o
+
+Setting-up for the uninstall task...
+Running: 1, Waiting: 2, Finished: 0, Failed: 0
+Running: 1, Waiting: 1, Finished: 1, Failed: 0
+Running: 1, Waiting: 0, Finished: 2, Failed: 0
+Running: 0, Waiting: 0, Finished: 3, Failed: 0
+Uninstall task Finished.
+```
+
+```text With Junk Cleanup
+Uninstall task Finished.
+Starting junk cleanup with a minimum confidence level of VeryGood
+The following junk items will be permanently deleted:
+Registry: HKLM\SOFTWARE\Adobe\Flash Player
+Folder: C:\ProgramData\Adobe\Flash Player
+File: C:\Windows\System32\Macromed\Flash\flashplayer.xpt
+Do you want to continue? [Y]es/[N]o
+
+Adobe Flash Player Junk - 3 Entries Found
+```
+
+```text No Matches
+Starting bulk uninstall...
+Looking for applications...
+Found 247 applications.
+No applications matched the supplied uninstall list.
+```
+
+</CodeGroup>
+
+### Return Codes
+
+| Code | Meaning | When It Occurs |
+|------|---------|----------------|
+| `0` | Success | All applications uninstalled successfully, or no matches found |
+| `1` | Invalid arguments | Invalid command syntax |
+| `13` | Unexpected error | System exception during uninstall process |
+| `87` | Invalid syntax | Missing filename or file does not exist |
+| `1223` | Cancelled | User pressed N when prompted for confirmation |
+
+<Warning>
+**Unattended Mode Warning**
+
+The `/U` switch bypasses all user confirmation prompts. When enabled, you will see:
+
+```text
+WARNING: Running in unattended mode. To abort press Ctrl+C or close the window.
+```
+
+**ONLY USE AFTER THOROUGH TESTING.** Uninstall lists should be as specific as possible to avoid false positives. There are no warranties, use with caution.
+</Warning>
+
+## export
+
+Export installed application information to an XML file for inventory management, compliance auditing, or backup purposes.
+
+### Syntax
+
+```bash
+BCU-console export [drive:][path]filename [/Q] [/U] [/V]
+```
+
+### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `[drive:][path]filename` | Yes | Path where the XML export file should be saved |
+
+### Switches
+
+| Switch | Description | Default |
+|--------|-------------|----------|
+| `/Q` | Quiet mode - suppress progress messages during app scanning | Off |
+| `/U` | Unattended mode - suppress progress messages | Off |
+| `/V` | Verbose logging - show detailed scanning information | Off |
+
+<Info>
+The `/Q` and `/U` switches affect the application scanning process, not the export itself. They suppress progress messages during the "Looking for applications" phase.
+</Info>
+
+### Examples
+
+<CodeGroup>
+
+```bash Simple Export
+# Export to XML file
+BCU-console export C:\Inventory\installed-apps.xml
+```
+
+```bash Quiet Export
+# Suppress scanning progress messages
+BCU-console export C:\Inventory\apps.xml /Q
+```
+
+```bash Dynamic Filename
+# Use environment variables for dynamic naming
+BCU-console export C:\Inventory\%COMPUTERNAME%-apps.xml /Q
+```
+
+```bash Network Path
+# Export to network share
+BCU-console export \\FileServer\Inventory\%COMPUTERNAME%.xml /U
+```
+
+```bash Verbose Export
+# Show detailed information during scanning
+BCU-console export C:\Reports\apps.xml /V
+```
+
+</CodeGroup>
+
+### Example Output
+
+```text
+BCU-console, Version=5.x.x.x, Culture=neutral, PublicKeyToken=null
+
+Starting export to C:\Inventory\installed-apps.xml
+Looking for applications...
+Found 247 applications.
+Exporting data...
+Success!
+```
+
+### XML Output Format
+
+The exported XML file contains comprehensive application data:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationList>
+  <Application>
+    <DisplayName>Google Chrome</DisplayName>
+    <DisplayVersion>120.0.6099.109</DisplayVersion>
+    <Publisher>Google LLC</Publisher>
+    <InstallDate>2024-01-15</InstallDate>
+    <InstallLocation>C:\Program Files\Google\Chrome\Application</InstallLocation>
+    <UninstallString>"C:\Program Files\Google\Chrome\Application\120.0.6099.109\Installer\setup.exe" --uninstall</UninstallString>
+    <QuietUninstallString>"C:\Program Files\Google\Chrome\Application\120.0.6099.109\Installer\setup.exe" --uninstall --force-uninstall</QuietUninstallString>
+    <AboutUrl>https://www.google.com/chrome/</AboutUrl>
+    <EstimatedSize>262144</EstimatedSize>
+    <Is64Bit>true</Is64Bit>
+    <IsRegistered>true</IsRegistered>
+    <RegistryKeyName>Google Chrome</RegistryKeyName>
+  </Application>
+  <!-- More applications... -->
+</ApplicationList>
+```
+
+### Return Codes
+
+| Code | Meaning | When It Occurs |
+|------|---------|----------------|
+| `0` | Success | Export completed successfully |
+| `1` | Invalid arguments | Invalid command syntax |
+| `13` | Unexpected error | System exception during export |
+| `87` | Invalid syntax | Missing filename or invalid path |
+
+## list
+
+Display a formatted list of all installed applications in the console.
+
+### Syntax
+
+```bash
+BCU-console list [/Q] [/U] [/V]
+```
+
+### Switches
+
+| Switch | Description | Default |
+|--------|-------------|----------|
+| `/Q` | Quiet mode - suppress progress messages during scanning | Off |
+| `/U` | Unattended mode - suppress progress messages | Off |
+| `/V` | Verbose logging - show detailed scanning information | Off |
+
+### Examples
+
+<CodeGroup>
+
+```bash Simple List
+# Display all installed applications
+BCU-console list
+```
+
+```bash Quiet List
+# Suppress scanning progress messages
+BCU-console list /Q
+```
+
+```bash Verbose List
+# Show detailed scanning information
+BCU-console list /V
+```
+
+```bash Redirect to File
+# Save output to text file
+BCU-console list /Q > C:\Reports\installed-apps.txt
+```
+
+```bash Filter Results
+# Use findstr to filter results
+BCU-console list /Q | findstr /I "Chrome Firefox Edge"
+```
+
+</CodeGroup>
+
+### Example Output
+
+```text
+BCU-console, Version=5.x.x.x, Culture=neutral, PublicKeyToken=null
+
+Looking for applications...
+Found 247 applications.
+Display Name                              Version               Source
+------------------------------------------------------------------------------------------------------
+7-Zip 23.01 (x64)                         23.01                 https://www.7-zip.org/
+Adobe Acrobat Reader DC                   23.008.20470          https://www.adobe.com/products/reader
+Google Chrome                             120.0.6099.109        https://www.google.com/chrome/
+Microsoft Edge                            120.0.2210.91         https://www.microsoft.com/edge
+Microsoft Office Professional Plus 2021   16.0.17328.20068      https://www.office.com
+Mozilla Firefox 121.0                     121.0                 https://www.mozilla.org/firefox/
+Notepad++ (64-bit x64)                    8.6.2                 https://notepad-plus-plus.org/
+Python 3.12.1 (64-bit)                    3.12.1                https://www.python.org/
+VLC media player                          3.0.20                https://www.videolan.org/vlc/
+WinRAR 6.24 (64-bit)                      6.24                  https://www.win-rar.com
+```
+
+### Output Format
+
+The list command displays applications in a three-column format:
+
+| Column | Width | Content | Truncated |
+|--------|-------|---------|----------|
+| Display Name | 40 characters | Application name | Yes, if longer than 40 chars |
+| Version | 20 characters | Version number | Yes, if longer than 20 chars |
+| Source | 40 characters | Publisher website or About URL | Yes, if longer than 40 chars |
+
+<Tip>
+**Piping Output**
+
+The list command output can be piped to other command-line tools for filtering, searching, or analysis:
+
+```bash
+# Count total applications
+BCU-console list /Q | find /C "https://"
+
+# Find specific publisher
+BCU-console list /Q | findstr /I "Microsoft"
+
+# Export to CSV (using PowerShell)
+BCU-console list /Q | ConvertFrom-String | Export-Csv apps.csv
+```
+</Tip>
+
+### Return Codes
+
+| Code | Meaning | When It Occurs |
+|------|---------|----------------|
+| `0` | Success | List displayed successfully |
+| `1` | Invalid arguments | Invalid command syntax |
+| `13` | Unexpected error | System exception during scanning |
+
+## Global Switches Reference
+
+These switches can be used with any command:
+
+<AccordionGroup>
+  <Accordion title="/Q - Quiet Mode" icon="volume-off">
+    **Description**: Use quiet (silent) uninstallers wherever possible and suppress progress messages during application scanning.
+    
+    **Behavior**:
+    - Suppresses "Looking for applications" progress messages
+    - For `uninstall` command: Uses silent uninstallers instead of interactive installers
+    - Does not affect confirmation prompts (use `/U` for that)
+    
+    **When to use**:
+    - Running in scripts where you want minimal output
+    - When you don't want installer windows to appear during uninstallation
+    - Scheduled tasks and automation scenarios
+    
+    **Example**:
+    ```bash
+    BCU-console list /Q > output.txt
+    ```
+  </Accordion>
+  
+  <Accordion title="/U - Unattended Mode" icon="robot">
+    **Description**: Runs the command without any user interaction. All confirmation prompts are bypassed.
+    
+    **Behavior**:
+    - Skips all "Do you want to continue? [Y]es/[N]o" prompts
+    - Automatically proceeds with operations
+    - Displays warning: "Running in unattended mode. To abort press Ctrl+C or close the window."
+    - Suppresses application scanning progress messages
+    
+    **When to use**:
+    - Fully automated scripts and scheduled tasks
+    - Remote execution scenarios
+    - When you're certain about the operation and don't need confirmation
+    
+    **WARNING**: Only use after thorough testing. Uninstall lists should be as specific as possible to avoid false positives.
+    
+    **Example**:
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /U /Q
+    ```
+  </Accordion>
+  
+  <Accordion title="/V - Verbose Mode" icon="message">
+    **Description**: Enables detailed logging and shows additional information during operation.
+    
+    **Behavior**:
+    - Shows detailed progress messages during application scanning
+    - Displays "-> Inner message" lines with additional context
+    - Helps troubleshoot issues by providing more information
+    
+    **When to use**:
+    - Debugging issues with uninstall lists
+    - Understanding what the tool is doing during scanning
+    - First-time testing before automating
+    
+    **Example**:
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /V
+    ```
+    
+    **Example verbose output**:
+    ```text
+    Looking for applications...
+    Scanning registry uninstall keys
+    -> HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+    -> HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+    Scanning Windows Store apps
+    -> Found 15 Windows Store packages
+    ```
+  </Accordion>
+  
+  <Accordion title="/J - Junk Cleanup" icon="broom">
+    **Description**: After uninstalling applications, automatically scan for and remove leftover registry entries, files, and folders.
+    
+    **Behavior**:
+    - Runs junk cleanup after successful uninstallation
+    - Defaults to "VeryGood" confidence level if no level specified
+    - Shows list of junk items found before deleting (unless `/U` is used)
+    - Prompts for confirmation before deleting (unless `/U` is used)
+    
+    **Syntax**:
+    ```bash
+    /J              # Use VeryGood confidence level (default)
+    /J=VeryGood     # Explicitly specify VeryGood
+    /J=Good         # Use Good confidence level
+    /J=Questionable # Use Questionable confidence level (risky)
+    /J=Bad          # Use Bad confidence level (very risky)
+    /J=Unknown      # Use Unknown confidence level (extremely risky)
+    ```
+    
+    **WARNING**: Use extreme caution when choosing any level below VeryGood. There are no warranties.
+    
+    **Example**:
+    ```bash
+    BCU-console uninstall C:\Lists\apps.bcul /Q /J
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Return Codes Summary
+
+All BCU-console commands use these standard return codes:
+
+<CardGroup cols={2}>
+  <Card title="0 - Success" icon="check">
+    The operation completed successfully. All applications were uninstalled, exported, or listed without errors.
+  </Card>
+  <Card title="1 - Invalid Arguments" icon="circle-xmark">
+    Command syntax error or invalid parameters. Check your command syntax.
+  </Card>
+  <Card title="13 - Unexpected Error" icon="bug">
+    An unhandled system exception occurred. Check the console output for details.
+  </Card>
+  <Card title="87 - Invalid Syntax" icon="exclamation">
+    Missing required arguments or invalid file path. Verify your file paths exist.
+  </Card>
+  <Card title="1223 - Cancelled" icon="hand">
+    The operation was cancelled by the user pressing 'N' at a confirmation prompt.
+  </Card>
+</CardGroup>
+
+### Error Handling in Scripts
+
+Always check return codes in your scripts to handle errors appropriately:
+
+<CodeGroup>
+
+```batch Batch Script
+@echo off
+BCU-console uninstall C:\Lists\apps.bcul /U /Q
+
+IF %ERRORLEVEL% EQU 0 (
+    echo Success: All applications uninstalled
+    exit /b 0
+)
+
+IF %ERRORLEVEL% EQU 1 (
+    echo Error: Invalid arguments
+    exit /b 1
+)
+
+IF %ERRORLEVEL% EQU 13 (
+    echo Error: Unexpected system error
+    exit /b 13
+)
+
+IF %ERRORLEVEL% EQU 87 (
+    echo Error: Invalid syntax or missing file
+    exit /b 87
+)
+
+IF %ERRORLEVEL% EQU 1223 (
+    echo Operation cancelled by user
+    exit /b 1223
+)
+
+echo Unknown error: %ERRORLEVEL%
+exit /b %ERRORLEVEL%
+```
+
+```powershell PowerShell
+$process = Start-Process -FilePath "BCU-console" `
+    -ArgumentList "uninstall", "C:\Lists\apps.bcul", "/U", "/Q" `
+    -Wait -PassThru -NoNewWindow
+
+switch ($process.ExitCode) {
+    0 { 
+        Write-Host "Success: All applications uninstalled" -ForegroundColor Green
+        exit 0
+    }
+    1 { 
+        Write-Error "Invalid arguments"
+        exit 1
+    }
+    13 { 
+        Write-Error "Unexpected system error"
+        exit 13
+    }
+    87 { 
+        Write-Error "Invalid syntax or missing file"
+        exit 87
+    }
+    1223 { 
+        Write-Warning "Operation cancelled by user"
+        exit 1223
+    }
+    default {
+        Write-Error "Unknown error: $($process.ExitCode)"
+        exit $process.ExitCode
+    }
+}
+```
+
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="CLI Overview" icon="book" href="/cli/overview">
+    Learn about BCU-console features and use cases
+  </Card>
+  <Card title="Scripting Guide" icon="code" href="/cli/scripting">
+    Real-world automation examples and script templates
+  </Card>
+</CardGroup>

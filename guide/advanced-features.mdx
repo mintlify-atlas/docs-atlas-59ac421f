@@ -1,0 +1,517 @@
+---
+title: Advanced Features
+description: Advanced features including orphan detection, startup management, and power tools
+---
+
+Bulk Crap Uninstaller includes powerful advanced features for experienced users. This guide covers specialized tools and capabilities beyond basic uninstallation.
+
+## Orphan Detection
+
+Orphaned entries are applications that appear in the uninstaller list but have missing or invalid uninstallers.
+
+### Identifying Orphans
+
+Enable orphan detection:
+
+1. Go to **Settings > Advanced**
+2. Enable **Display orphaned entries**
+3. Orphaned applications appear highlighted in purple
+4. The list legend shows "Orphaned" category
+
+### Why Applications Become Orphaned
+
+Common causes:
+- Manual deletion of application files without proper uninstall
+- Corrupted or incomplete uninstallation
+- Moved or renamed installation directory
+- Broken uninstaller executable
+- Registry-only entries without actual files
+
+### Handling Orphaned Applications
+
+**For Invalid Entries:**
+1. Select the orphaned application
+2. Choose **Advanced Operations > Delete Registry Entry**
+3. Confirm removal
+4. Registry entry is safely removed
+
+**For Recoverable Applications:**
+1. Select the orphaned application
+2. Use **Advanced Operations > Manual Uninstall**
+3. BCU scans for any remaining files/registry entries
+4. Review and remove found junk
+
+<Tip>
+Orphaned entries don't necessarily mean leftover files exist. Check with Manual Uninstall to see what remains.
+</Tip>
+
+## Startup Management
+
+Manage applications that run automatically at system startup.
+
+### Viewing Startup Entries
+
+Applications with startup entries show indicators:
+- Applications with active startup items are marked
+- View in Properties window under "Startup Entries" section
+- Shows executable path, type (Run key, Task, Service), and status
+
+### Disabling Autostart
+
+Prevent applications from starting automatically:
+
+1. Select application(s) with startup entries
+2. Choose **Advanced Operations > Disable Autostart**
+3. Confirm the operation
+4. Startup entries are disabled (not deleted)
+
+Types of startup entries BCU can disable:
+- **Registry Run keys** - HKLM and HKCU Run keys
+- **Startup folders** - All Users and user-specific
+- **Scheduled tasks** - Windows Task Scheduler entries
+- **Services** - Windows services set to automatic start
+
+<Note>
+Disabling autostart doesn't uninstall the application - it only prevents automatic startup.
+</Note>
+
+## Certificate Validation
+
+Verify digital signatures and publisher authenticity.
+
+### Enabling Certificate Testing
+
+1. Go to **Settings > Advanced**
+2. Enable **Test certificates**
+3. BCU validates digital signatures for all executables
+4. Results appear as color coding in the list
+
+### Certificate Status Indicators
+
+- **Green** - Valid, trusted certificate from recognized CA
+- **Orange** - No certificate or self-signed
+- **Red** - Invalid, expired, or revoked certificate
+
+### Understanding Certificate Results
+
+Click an application and view Properties to see:
+- Certificate issuer
+- Certificate subject (publisher)
+- Valid from/to dates
+- Certificate chain
+- Validation errors (if any)
+
+### Certificate Caching
+
+Speed up certificate validation:
+
+1. Go to **Settings > Advanced**
+2. Enable **Cache certificates**
+3. Certificate results are saved to disk
+4. Subsequent scans are much faster
+5. Cache is automatically refreshed periodically
+
+<Tip>
+Certificate validation helps identify potentially malicious or tampered software. Unsigned applications aren't necessarily bad, but be cautious.
+</Tip>
+
+## Invalid Entry Detection
+
+Find broken or problematic uninstaller entries.
+
+### Enabling Invalid Entry Testing
+
+1. Go to **Settings > Advanced**
+2. Enable **Test for invalid entries**
+3. BCU checks each entry for:
+   - Missing uninstaller executable
+   - Invalid paths
+   - Broken registry links
+   - Corrupted data
+
+### Working with Invalid Entries
+
+Invalid entries appear with:
+- Red highlighting in the list
+- "Invalid" indicator in status
+- Cannot be uninstalled normally
+
+Options for invalid entries:
+- **Delete Registry Entry** - Remove from uninstaller list
+- **Manual Uninstall** - Scan for any remaining junk
+- **Rename** - Fix the display name if needed
+
+## Registry Operations
+
+Advanced registry manipulation tools.
+
+### Open Registry Key
+
+View an application's registry entry:
+
+1. Select a single application
+2. Choose **Advanced Operations > Open Registry Key**
+3. Regedit opens with the key selected
+4. View and edit registry values
+
+Useful for:
+- Verifying application information
+- Manually fixing broken entries
+- Understanding application structure
+- Troubleshooting issues
+
+<Warning>
+Manually editing registry keys can cause system instability. Only proceed if you understand registry structure.
+</Warning>
+
+### Delete Registry Entry
+
+Remove uninstaller registry keys:
+
+1. Select application(s) to remove
+2. Choose **Advanced Operations > Delete Registry Entry**
+3. Confirm the deletion
+4. Registry key is removed
+
+This does NOT:
+- Uninstall the application
+- Remove application files
+- Clean up leftover data
+
+Use this to:
+- Clean up invalid entries
+- Remove duplicate listings
+- Fix corrupted uninstaller entries
+
+### Create Registry Backup
+
+Export registry keys to .reg file:
+
+1. Select application(s) to backup
+2. Choose **Advanced Operations > Create Backup** or press **Ctrl+B**
+3. Choose save location
+4. Registry keys exported to .reg file
+
+Backup includes:
+- Main uninstaller registry key
+- All subkeys and values
+- Timestamp in filename
+
+<Tip>
+Always create backups before deleting or modifying registry entries. Double-click the .reg file to restore if needed.
+</Tip>
+
+## MSI Advanced Operations
+
+Specialized tools for Windows Installer (MSI) packages.
+
+### Accessing MSI Tools
+
+1. Select a single MSI-based application
+2. Choose **Advanced Operations > MSI Uninstall**
+3. Select operation mode
+
+### MSI Operation Modes
+
+**Uninstall:**
+- Standard MSI uninstall with UI
+- Shows progress and options
+- Allows customization
+- Command: `msiexec /x {GUID}`
+
+**Quiet Uninstall:**
+- Silent MSI removal
+- No UI or prompts
+- Uses default options
+- Command: `msiexec /x {GUID} /qn`
+
+**Modify:**
+- Opens MSI modify/repair interface
+- Allows feature selection
+- Can repair or change installation
+- Command: `msiexec /i {GUID}`
+
+<Note>
+MSI operations require the application's Product GUID. BCU automatically extracts this from the registry.
+</Note>
+
+## Uninstall from Directory
+
+Attempt to uninstall based on installation folder.
+
+### When to Use
+
+Useful for:
+- Portable applications
+- Manually installed software
+- Damaged or missing registry entries
+- Leftover folders after uninstall
+
+### Process
+
+<Steps>
+  <Step title="Select Folder">
+    1. Choose **Tools > Uninstall from Directory**
+    2. Browse to the application's installation folder
+    3. Select the folder containing the application
+  </Step>
+  
+  <Step title="Detection">
+    BCU attempts to:
+    - Find an uninstaller in the folder
+    - Match folder to known installed applications
+    - Create a temporary uninstaller entry
+  </Step>
+  
+  <Step title="Uninstall">
+    If an uninstaller is found:
+    - BCU prompts to run it
+    - Standard uninstall proceeds
+    
+    If no uninstaller found:
+    - Proceeds to junk scan
+    - Scans for registry entries
+    - Offers to delete folder
+  </Step>
+  
+  <Step title="Cleanup">
+    After uninstall:
+    - Junk scan runs automatically
+    - Remove any remaining files
+    - Clean up registry entries
+  </Step>
+</Steps>
+
+## Directory Ownership
+
+Take ownership of protected folders for removal.
+
+### When Needed
+
+Some applications install to protected locations:
+- System folders with restricted permissions
+- Directories owned by TrustedInstaller
+- Folders locked by Windows security
+
+### Taking Ownership
+
+1. Select application(s)
+2. Choose **Advanced Operations > Take Ownership**
+3. Select target directory from submenu
+4. A command prompt opens
+5. Ownership is transferred
+6. Permissions are granted
+
+Commands executed:
+```cmd
+takeown /f "<directory>"
+icacls "<directory>" /grant administrators:F
+```
+
+<Warning>
+Taking ownership of system folders can compromise Windows security. Only use for removing stubborn third-party applications.
+</Warning>
+
+## Export and Import
+
+Share and synchronize uninstaller lists.
+
+### Export Applications
+
+Save application list to XML:
+
+1. Select applications to export
+2. Choose **File > Export Selected**
+3. Choose filename and location
+4. XML file contains:
+   - Application names, publishers, versions
+   - GUIDs and registry keys
+   - Install locations
+   - Uninstall commands
+
+### Export Uses
+
+**Documentation:**
+- Create inventory of installed software
+- Track installed versions
+- Audit compliance
+
+**Automation:**
+- Generate batch uninstall scripts
+- Create deployment packages
+- Standardize installations
+
+**Synchronization:**
+- Maintain same applications across multiple PCs
+- Remove the same bloatware from multiple systems
+- Audit differences between systems
+
+### Export Store Apps to PowerShell
+
+For Microsoft Store applications:
+
+1. Select Store apps
+2. Choose **File > Export Store Apps to PowerShell Script**
+3. Save .ps1 script file
+4. Script contains PowerShell commands to remove selected Store apps
+5. Run with administrative privileges
+
+<Tip>
+PowerShell scripts are useful for removing Store apps in bulk or deploying to multiple systems.
+</Tip>
+
+## Online Search Integration
+
+Quickly research applications online.
+
+### Search Options
+
+Right-click an application and choose from:
+
+- **Search Online** - Google search for application name
+- **Open Web Page** - Visit application's official website (if available)
+- **Search Publisher** - Find other applications by same publisher
+
+Searches open in your default browser.
+
+### Using Search Effectively
+
+Before uninstalling unknown applications:
+1. Search online to identify it
+2. Check if it's required by other software
+3. Verify it's not a system component
+4. Read removal experiences from others
+
+## Protected Application Handling
+
+Override protection for system components.
+
+### Protection System
+
+BCU marks certain applications as "Protected":
+- Critical Windows components
+- Drivers and system utilities
+- Security software
+- Firmware and BIOS tools
+
+Protected applications:
+- Cannot be uninstalled by default
+- Show warning indicators
+- Skip during batch operations
+
+### Disabling Protection
+
+<Warning>
+Only disable protection if you fully understand the consequences. Removing protected applications can break Windows or cause boot failures.
+</Warning>
+
+1. Go to **Settings > Advanced**
+2. Enable **Disable protection of system components**
+3. Confirmation warning appears
+4. Protection is bypassed for the session
+5. Protected applications can now be uninstalled
+
+When attempting to uninstall protected items:
+- Warning prompt appears listing affected applications
+- Option to proceed or cancel
+- Operation can be canceled at any time
+
+## Simulation Mode
+
+Test operations without making changes.
+
+### Enabling Simulation
+
+1. Go to **Settings > Advanced**
+2. Enable **Simulate uninstallation**
+3. All operations run in simulation mode
+4. No actual changes are made to the system
+
+Simulation mode:
+- Pretends to run uninstallers
+- Simulates file deletion
+- Fakes registry modifications
+- Shows progress and results as normal
+
+### When to Use Simulation
+
+- Testing bulk operations before executing
+- Learning how BCU works
+- Verifying what would be removed
+- Creating documentation or tutorials
+- Troubleshooting without risk
+
+<Note>
+Simulation mode is primarily for debugging and testing. Don't forget to disable it before actual uninstallation.
+</Note>
+
+## Advanced Clipboard Operations
+
+Copy detailed application information.
+
+Right-click application(s) and choose **Copy to Clipboard**:
+
+### Copy Options
+
+**Program Name:**
+- Just the display name
+- One per line
+- Plain text
+
+**Full Information:**
+- All available details
+- Formatted text with labels
+- Includes publisher, version, size, paths, GUIDs
+
+**Uninstall String:**
+- Just the uninstall command
+- Can be used in scripts
+- One per line
+
+**Registry Path:**
+- Registry key location
+- Can be pasted into regedit
+- One per line
+
+**GUIDs:**
+- Product codes only
+- Useful for MSI operations
+- One per line
+
+### Advanced Clipboard Copy
+
+For customized output:
+
+1. Choose **Copy to Clipboard > Advanced**
+2. Select fields to include
+3. Choose delimiter (tab, comma, pipe)
+4. Choose format (plain text, CSV, XML)
+5. Copy to clipboard
+
+## Tips for Power Users
+
+<CardGroup cols={2}>
+  <Card title="Combine with Task Scheduler" icon="calendar">
+    Export PowerShell scripts and schedule them to run automatically for maintenance.
+  </Card>
+  
+  <Card title="Use Portable Version" icon="briefcase">
+    Run BCU from USB drive to clean multiple PCs without installation.
+  </Card>
+  
+  <Card title="Create Standard Lists" icon="list-check">
+    Maintain XML lists of bloatware to remove from new PC setups.
+  </Card>
+  
+  <Card title="Integrate with Scripts" icon="code">
+    Use command-line switches and exported data for automated workflows.
+  </Card>
+  
+  <Card title="Monitor Certificate Changes" icon="certificate">
+    Regular certificate checks can identify tampered or replaced executables.
+  </Card>
+  
+  <Card title="Batch Registry Backups" icon="database">
+    Before major changes, export all uninstaller registry keys as a master backup.
+  </Card>
+</CardGroup>

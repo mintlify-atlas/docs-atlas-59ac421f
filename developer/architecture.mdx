@@ -1,0 +1,160 @@
+---
+title: Architecture Overview
+description: Understanding BCUninstaller's code structure and main components
+---
+
+## Project Structure
+
+Bulk Crap Uninstaller is built with a modular architecture that separates concerns into distinct projects. The codebase follows a clear separation between user interfaces, core logic, and specialized helper applications.
+
+### Core Components
+
+The solution is organized into several key areas:
+
+<CardGroup cols={2}>
+  <Card title="User Interfaces" icon="desktop">
+    **BulkCrapUninstaller** - Main GUI application built with WinForms
+    
+    **BCU-console** - Command-line interface for scripting and automation
+    
+    **BCU-launcher** - Native C++ launcher executable
+  </Card>
+  
+  <Card title="Core Libraries" icon="book">
+    **UninstallTools** - Core uninstallation logic and application detection
+    
+    **KlocTools** - Shared utility functions and helpers
+    
+    **ObjectListView** - Enhanced list view control for the UI
+  </Card>
+  
+  <Card title="Helper Applications" icon="wrench">
+    **SteamHelper** - Steam application integration
+    
+    **WinUpdateHelper** - Windows Update component detection
+    
+    **StoreAppHelper** - Windows Store app management
+    
+    **OculusHelper** - Oculus VR application support
+    
+    **ScriptHelper** - Script execution support
+  </Card>
+  
+  <Card title="Supporting Libraries" icon="puzzle-piece">
+    **UninstallerAutomatizer** - Automated uninstaller interaction
+    
+    **UniversalUninstaller** - Generic uninstaller handling
+    
+    **PortableSettingsProvider** - Portable configuration management
+    
+    **SimpleTreeMap** - Tree map visualization component
+    
+    **NetSettingBinder** - Settings binding framework
+    
+    **NBug** - Custom error reporting implementation
+  </Card>
+</CardGroup>
+
+## Architecture Pattern
+
+BCUninstaller uses a layered architecture where:
+
+1. **UI Layer** - The WinForms interface and console app handle user interaction
+2. **Business Logic Layer** - UninstallTools contains all core uninstallation logic
+3. **Helper Layer** - Specialized helper applications handle platform-specific integrations
+4. **Utility Layer** - Shared libraries provide common functionality
+
+### Helper Application Pattern
+
+The helper applications are designed as separate executables that:
+
+- Communicate via command-line interface (CLI)
+- Can be used independently in batch scripts
+- Decouple highly specialized code from the main application
+- Adapt different application types into a common format
+
+## UninstallTools: The Core Engine
+
+UninstallTools is where most of the magic happens. This library handles:
+
+- Application detection from multiple sources (registry, file system, etc.)
+- Uninstaller validation and execution
+- Leftover file and registry entry detection
+- Integration with various uninstaller systems (NSIS, InnoSetup, Msiexec)
+- Windows Store app enumeration
+- Steam library parsing
+
+### Simplified Class Diagram
+
+The UninstallTools library follows an object-oriented design centered around the `ApplicationUninstallerEntry` class, which represents a single detected application. The class diagram shows the relationships between core components:
+
+![UninstallTools Class Diagram](../../source/doc/SimplifiedClassDiagram.png)
+
+Key classes include:
+
+- **ApplicationUninstallerEntry** - Represents an installed application with all its metadata
+- **UninstallerManager** - Orchestrates the discovery and management of uninstallers
+- **JunkScanner** - Detects leftover files and registry entries after uninstallation
+- **UninstallTaskRunner** - Executes uninstall operations with progress tracking
+
+## Supported Uninstaller Systems
+
+BCUninstaller has specialized support for detecting and handling:
+
+- **NSIS** (Nullsoft Scriptable Install System)
+- **InnoSetup**
+- **Windows Installer (MSI)**
+- **Windows Store Apps**
+- **Steam Games**
+- **Windows Features**
+- **Oculus VR Applications**
+- **Generic quiet uninstallers**
+
+## Platform Support
+
+<CardGroup cols={2}>
+  <Card title=".NET Version" icon="code">
+    Built with .NET 8 for modern Windows platforms
+    
+    Supports multiple architectures: x86, x64, ARM64, AnyCPU
+  </Card>
+  
+  <Card title="Build Configurations" icon="gear">
+    Debug and Release configurations
+    
+    Multiple platform targets for broad compatibility
+  </Card>
+</CardGroup>
+
+## Project Dependencies
+
+The main BCUninstaller application depends on:
+
+- UninstallTools (core logic)
+- KlocTools (utilities)
+- All helper applications
+- UI component libraries (ObjectListView, SimpleTreeMap)
+- Configuration libraries (PortableSettingsProvider, NetSettingBinder)
+
+The console application (BCU-console) shares most dependencies with the GUI version, enabling feature parity between both interfaces.
+
+## Extension Points
+
+The architecture provides several extension points for adding new functionality:
+
+- **Custom uninstaller detection** - Add new detection methods in UninstallTools
+- **New helper applications** - Create CLI tools following the existing helper pattern
+- **Additional junk scanners** - Extend leftover detection capabilities
+- **UI customizations** - Modify the WinForms interface or add new views
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Building from Source" icon="hammer" href="/developer/building">
+    Learn how to compile BCUninstaller
+  </Card>
+  
+  <Card title="Contributing" icon="code-pull-request" href="/developer/contributing">
+    Guidelines for contributing code
+  </Card>
+</CardGroup>

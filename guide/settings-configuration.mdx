@@ -1,0 +1,610 @@
+---
+title: Settings & Configuration
+description: Complete guide to application settings and configuration options
+---
+
+Bulk Crap Uninstaller provides extensive configuration options to customize its behavior. Access settings via **Tools > Settings** or press **Ctrl+P**.
+
+## Settings Window Overview
+
+Settings are organized into tabbed categories:
+
+- **General** - Basic application behavior
+- **Appearance** - Interface and display options  
+- **Uninstall** - Uninstallation process settings
+- **Scanning** - Application detection configuration
+- **Junk Removal** - Leftover scan settings
+- **Advanced** - Power user and experimental features
+- **External** - Integration with external tools
+
+<Note>
+Most settings take effect immediately. Some may require restarting BCU or refreshing the application list.
+</Note>
+
+## General Settings
+
+### Updates
+
+**Check for updates:**
+- When enabled, BCU checks for new versions on startup
+- Notifications appear when updates are available
+- Checks are performed in the background
+- No personal data is transmitted
+
+**Send anonymous statistics:**
+- Helps improve BCU by sending usage statistics
+- No personal information or application lists are shared
+- Only feature usage and error reports
+- Can be disabled at any time
+
+### Feedback
+
+**Never show feedback request:**
+- Disables the feedback prompt that appears occasionally
+- Feedback helps improve the application
+- Enable if you find the prompts disruptive
+
+**Enable user ratings:**
+- Shows community ratings for applications
+- Adds a "Rating" column to the list
+- Ratings downloaded from online database
+- Helps identify potentially unwanted applications
+
+### Miscellaneous
+
+**Auto-load default list:**
+- Automatically loads a specific uninstaller list on startup
+- Configure the default list in File > Load Uninstaller List
+- Useful for standardized workflows
+
+**Colorblind mode:**
+- Adjusts color coding for color vision deficiency
+- Uses patterns in addition to colors
+- Improves accessibility
+
+## Appearance Settings
+
+### Display Options
+
+**Show toolbar:**
+- Toggles main toolbar visibility
+- Can also be changed via View menu
+- Keyboard shortcuts still work when hidden
+
+**Show settings panel:**
+- Toggles right sidebar with filters and search
+- Provides more space for application list when hidden
+- Access via View menu or F3
+
+**Show status bar:**
+- Toggles bottom status bar
+- Shows total applications and size information
+- Displays current operations
+
+**Show color legend:**
+- Displays floating window explaining color codes
+- Updates based on visible application types
+- Automatically positions near list view
+
+**Show tree map:**
+- Enables visual size representation
+- Shows applications as proportionally-sized rectangles
+- Useful for identifying large applications
+
+### Theme
+
+**Use system theme:**
+- Follows Windows theme (dark/light)
+- Adjusts colors automatically
+- Improves integration with Windows 10/11
+- Disable for classic appearance
+
+**DPI awareness:**
+- Improves scaling on high-DPI displays
+- Enable for sharper text on 4K monitors
+- May require restart to take effect
+- Disable if UI elements appear too large/small
+
+### List View
+
+**Use checkboxes for selection:**
+- Adds checkboxes to each list item
+- Easier for batch selection
+- Allows building selections over time
+
+**Use groups:**
+- Groups applications by primary sort column
+- Collapsible group headers
+- Better organization for large lists
+
+**Double-click action:**
+- **Uninstall** - Starts uninstall process
+- **Properties** - Opens properties window
+- **Quiet Uninstall** - Starts silent uninstall
+- **Nothing** - Disables double-click
+
+## Uninstall Settings
+
+### Messages and Prompts
+
+**Remove junk after uninstall:**
+- **Ask** - Prompt after each uninstall session
+- **Yes** - Always scan for junk automatically
+- **No** - Never scan for junk
+
+**Create system restore points:**
+- **Ask** - Prompt before each uninstall session
+- **Yes** - Always create restore points
+- **No** - Never create restore points
+- Requires Windows System Restore to be enabled
+- May significantly slow down uninstall process
+
+<Tip>
+Creating restore points is recommended for system components but may be unnecessary for simple applications.
+</Tip>
+
+**Ask before removing loud items:**
+- When enabled, prompts if any loud (interactive) uninstallers are queued during quiet uninstall
+- Gives option to skip loud items or proceed
+
+**Show all bad junk:**
+- When enabled, junk window shows even low-confidence items by default
+- Useful for thorough cleanup but increases risk
+- Not recommended for typical users
+
+### Concurrent Uninstallation
+
+**Enable concurrent uninstallation:**
+- Allows multiple uninstallers to run simultaneously
+- Significantly speeds up batch operations
+- Works best with quiet uninstallers
+
+**Maximum concurrent count:**
+- Number of simultaneous uninstallers (1-4)
+- **2** - Good balance for most systems
+- **3-4** - For powerful systems with many quiet uninstallers
+- **1** - Traditional sequential mode
+
+**Only one loud at a time:**
+- Prevents multiple interactive uninstallers from overlapping
+- Recommended to avoid confusion
+- Quiet uninstallers still run in parallel
+
+**Disable manual collision protection:**
+- Advanced option to skip automatic conflict detection
+- May cause issues if uninstallers interfere with each other
+- Only enable if you understand the risks
+
+### Quiet Uninstall Behavior
+
+**Enable automatization:**
+- Attempts to automate interactive uninstallers
+- Simulates button clicks to proceed through dialogs
+- Uses default options when automating
+
+**Auto-kill stuck uninstallers:**
+- Terminates uninstallers that freeze or hang
+- Waits 60 seconds of no activity before killing
+- Marks as failed for manual cleanup
+
+**Retry failed quiet as loud:**
+- Attempts to rerun failed silent uninstalls interactively
+- Prompts after all quiet uninstalls complete
+- Useful when silent switches don't work
+
+**Use daemon for quiet uninstall:**
+- Uses a helper service for better compatibility
+- May improve success rate for stubborn uninstallers
+- Experimental feature
+
+### Uninstall Process
+
+**Prevent sleep during uninstall:**
+- Blocks Windows from sleeping/hibernating
+- Prevents interrupted uninstallations
+- Automatically released when complete
+
+**Intelligent uninstaller sorting:**
+- Automatically orders uninstallers for optimal results
+- Considers size, type, dependencies
+- Recommended for batch operations
+
+## Scanning Settings
+
+Configure which sources BCU scans for installed applications.
+
+### Standard Sources
+
+**Scan Windows Registry:**
+- Scans standard uninstaller registry locations
+- HKLM and HKCU Software\Microsoft\Windows\CurrentVersion\Uninstall
+- Primary source for most applications
+- Should always be enabled
+
+**Scan Program Files:**
+- Searches Program Files and Program Files (x86) folders
+- Finds applications missing registry entries
+- Can detect manually installed software
+- May slow down initial scan
+
+**Scan predefined locations:**
+- Uses built-in list of common installation paths
+- Includes portable application locations
+- Finds applications in non-standard places
+
+### Package Managers and Stores
+
+**Scan Steam games:**
+- Detects games installed through Steam
+- Shows game library entries
+- Can uninstall directly through Steam
+
+**Scan Microsoft Store apps:**
+- Shows Windows Store / UWP applications
+- Includes built-in Windows apps
+- Can generate PowerShell removal scripts
+
+**Scan Windows Features:**
+- Lists optional Windows features
+- Shows installed Windows components
+- Uses DISM for removal
+
+<Warning>
+Windows Features and Store Apps include system components. Only remove if you understand the impact.
+</Warning>
+
+**Scan Windows Updates:**
+- Lists installed Windows updates
+- Shows KB numbers and descriptions
+- Can uninstall problematic updates
+- Very slow scan - only enable when needed
+
+**Scan Chocolatey packages:**
+- Detects applications installed via Chocolatey
+- Shows package information
+- Can uninstall through Chocolatey
+
+**Scan Scoop apps:**
+- Detects applications installed via Scoop
+- Shows Scoop bucket information
+- Can uninstall through Scoop
+
+**Scan Oculus apps:**
+- Detects Oculus VR applications
+- Shows Oculus library entries
+
+### Folder Detection
+
+**Auto-detect program folders:**
+- Automatically finds installation directories
+- Scans all fixed drives
+- Can be slow on systems with many drives
+
+**Scan removable drives:**
+- Includes USB drives and external drives in scan
+- Only works when auto-detect is enabled
+- May significantly slow down scan
+
+**Custom program directories:**
+- Add non-standard installation paths
+- One path per line
+- Supports environment variables like %APPDATA%
+- Examples:
+  ```
+  D:\MyApps
+  E:\Programs
+  C:\CustomInstallLocation
+  ```
+
+## Junk Removal Settings
+
+Configure how BCU scans for and handles leftover files.
+
+### Junk Scanning
+
+**Scan drives:**
+- Searches file system for leftover folders and files
+- Can be slow on large drives
+- Disable for registry-only scanning
+
+**Scan registry:**
+- Searches for orphaned registry keys
+- Fast and recommended
+- Should usually be enabled
+
+**Scan predefined locations:**
+- Uses built-in junk definitions
+- Includes common leftover locations
+- Improves detection accuracy
+
+### Backup Settings
+
+**Backup leftover junk:**
+- **Ask** - Prompt before each junk removal
+- **Yes** - Always create backups automatically
+- **No** - Never create backups (not recommended)
+
+**Backup directory:**
+- Default location for junk backups
+- Should have sufficient free space
+- Backups include timestamps
+- Recommended: `C:\BCU_Backups` or similar
+
+<Tip>
+Regularly clean old backup folders to free disk space, but keep recent backups for at least a week.
+</Tip>
+
+## Advanced Settings
+
+### Testing and Detection
+
+**Test certificates:**
+- Validates digital signatures on executables
+- Shows certificate status with color coding
+- Slower startup but improved security visibility
+- Uses certificate caching to improve speed
+
+**Cache certificates:**
+- Saves certificate validation results
+- Dramatically speeds up subsequent scans
+- Cache stored in application directory
+- Automatically refreshed periodically
+
+**Test for invalid entries:**
+- Checks for broken uninstaller entries
+- Marks entries with missing files as invalid
+- Highlights in red
+- Useful for cleanup
+
+**Display orphaned entries:**
+- Shows applications with broken uninstallers
+- Highlights in purple
+- Indicates incomplete removals
+
+**Highlight special entries:**
+- Color-codes different application types
+- Store apps, system components, updates, etc.
+- Improves visual organization
+- Can be disabled for simpler appearance
+
+### Protection
+
+**Disable protection of system components:**
+- Allows uninstalling protected applications
+- Removes safety checks
+- Extremely dangerous - can break Windows
+- Shows warnings before each operation
+
+<Warning>
+Only disable protection if you absolutely know what you're doing. You can render Windows unbootable.
+</Warning>
+
+### Debugging
+
+**Simulate uninstallation:**
+- Pretends to uninstall without making changes
+- No files deleted, no registry modified
+- Useful for testing and demonstrations
+- Shows normal progress and results
+
+**Enable debug mode:**
+- Provides additional logging
+- Shows debug menu options
+- Displays technical information
+- Only for troubleshooting
+
+### Performance
+
+**Cache app information:**
+- Saves application metadata to disk
+- Speeds up subsequent startups
+- Cache stored in application directory
+- Automatically refreshes when needed
+
+## External Commands
+
+Integrate BCU with external tools and scripts.
+
+### Configuration
+
+**Enable external commands:**
+- Master switch for pre/post-uninstall commands
+- Must be enabled for commands to run
+
+**Pre-uninstall commands:**
+- Commands to run before starting any uninstaller
+- Runs once at the beginning of batch operation
+- Can be batch file, executable, or script
+- Example uses:
+  - Close related applications
+  - Create additional backups
+  - Log uninstall operations
+
+**Post-uninstall commands:**
+- Commands to run after all uninstalls complete
+- Runs once at the end of batch operation
+- Common uses:
+  - Run disk cleanup
+  - Clear temp files
+  - Restart services
+  - Generate reports
+
+### Command Format
+
+Each command:
+- One per line
+- Full path to executable required
+- Arguments supported
+- Relative paths relative to BCU location
+
+Examples:
+```batch
+# Clean temp files
+C:\Windows\System32\cleanmgr.exe /sagerun:1
+
+# Run BleachBit cleaner
+..\BleachBit\bleachbit_console.exe --clean system.tmp
+
+# Custom cleanup script
+C:\Scripts\post-uninstall-cleanup.bat
+```
+
+### Using External Tools
+
+Popular integrations:
+
+**BleachBit:**
+```batch
+bleachbit_console.exe --clean system.tmp system.logs system.recycle_bin
+```
+
+**CCleaner:**
+```batch
+CCleaner.exe /AUTO
+```
+
+**Custom PowerShell Script:**
+```batch
+powershell.exe -ExecutionPolicy Bypass -File "C:\Scripts\cleanup.ps1"
+```
+
+<Note>
+External commands run with BCU's privileges. If BCU is running as administrator, commands also run elevated.
+</Note>
+
+## Language Settings
+
+Change the interface language:
+
+1. Open Settings > General
+2. Select language from dropdown:
+   - Default (follow Windows)
+   - English
+   - Other supported languages
+3. Restart BCU for changes to take effect
+
+Supported languages include:
+- English
+- German
+- French
+- Spanish
+- Polish
+- Russian
+- Chinese (Simplified)
+- And more...
+
+## Importing and Exporting Settings
+
+Settings are automatically saved to:
+- **Installed version:** `%AppData%\Klocman\Bulk Crap Uninstaller\`
+- **Portable version:** `BCUninstaller.exe.config` in application directory
+
+### Backup Settings
+
+1. Navigate to settings location
+2. Copy `settings.xml` file
+3. Store backup in safe location
+
+### Restore Settings
+
+1. Close BCU
+2. Replace `settings.xml` with backup
+3. Restart BCU
+
+### Transfer Settings
+
+To use same settings on multiple PCs:
+1. Export settings from configured installation
+2. Copy settings file to other PC
+3. Place in appropriate settings location
+
+<Tip>
+Portable version keeps settings in the application folder, making it easy to maintain consistent settings across multiple computers.
+</Tip>
+
+## Resetting Settings
+
+Restore default configuration:
+
+1. Go to **Tools > Settings**
+2. Click **Reset to Defaults**
+3. Confirm the action
+4. All settings restored to factory defaults
+5. May require restart
+
+Alternatively:
+1. Close BCU
+2. Delete `settings.xml` file
+3. Restart BCU
+4. First-run wizard appears
+
+## Recommended Settings
+
+Common configuration profiles:
+
+### Conservative (Safest)
+
+<CardGroup cols={1}>
+  <Card title="Conservative Profile">
+    - Create restore points: Yes
+    - Remove junk: Ask
+    - Enable concurrent: No
+    - Test certificates: Yes
+    - Highlight special: Yes
+    - Disable protection: No
+  </Card>
+</CardGroup>
+
+### Balanced (Recommended)
+
+<CardGroup cols={1}>
+  <Card title="Balanced Profile">
+    - Create restore points: Ask
+    - Remove junk: Yes
+    - Enable concurrent: Yes (2-3 max)
+    - Test certificates: Yes
+    - Cache certificates: Yes
+    - Show orphans: Yes
+  </Card>
+</CardGroup>
+
+### Aggressive (Power Users)
+
+<CardGroup cols={1}>
+  <Card title="Aggressive Profile">
+    - Create restore points: No
+    - Remove junk: Yes
+    - Enable concurrent: Yes (3-4 max)
+    - Auto-kill stuck: Yes
+    - Intelligent sorting: Yes
+    - Show all junk: Yes
+  </Card>
+</CardGroup>
+
+## Performance Tuning
+
+Optimize BCU for your system:
+
+### Faster Startup
+
+- Enable certificate caching
+- Enable app info caching
+- Disable Windows Updates scan
+- Disable removable drive scanning
+- Reduce enabled scan sources
+
+### Faster Uninstall
+
+- Enable concurrent uninstallation
+- Increase max concurrent count
+- Enable auto-kill stuck uninstallers
+- Disable restore points (if safe)
+- Enable intelligent sorting
+
+### Lower Resource Usage
+
+- Disable certificate testing
+- Disable tree map
+- Use simple theme (no system theme)
+- Disable invalid entry testing
+- Close settings panel when not needed

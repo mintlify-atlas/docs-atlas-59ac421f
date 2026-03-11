@@ -1,0 +1,456 @@
+---
+title: Junk Removal
+description: How to use junk removal features, understand confidence levels, and review results
+---
+
+Bulk Crap Uninstaller's junk removal feature scans for leftover files, registry entries, and other remnants after uninstalling applications. This guide covers how to use junk scanning effectively and safely.
+
+## What is Junk?
+
+After uninstalling an application, various leftover items may remain:
+
+- **Registry entries** - Orphaned keys in Windows Registry
+- **Files and folders** - Installation directories, user data, caches
+- **Startup entries** - Services, scheduled tasks, autostart items
+- **Shortcuts** - Desktop, Start Menu, and Quick Launch shortcuts
+- **Browser extensions** - Toolbars and add-ons
+- **Configuration files** - Settings and preferences in various locations
+
+These leftovers:
+- Consume disk space
+- Clutter the registry
+- May cause conflicts with new installations
+- Slow down Windows startup
+
+## When to Run Junk Removal
+
+### After Uninstallation
+
+The most common scenario:
+
+1. Complete a standard or quiet uninstall
+2. BCU prompts: "Look for leftover junk?"
+3. Click **Yes** to start junk scan
+4. Review and remove found items
+
+<Tip>
+Always run junk scan after uninstalling applications to ensure complete removal.
+</Tip>
+
+### Manual Junk Removal (Advanced Uninstall)
+
+For applications with broken or missing uninstallers:
+
+1. Select the application(s)
+2. Choose **Advanced Operations > Manual Uninstall**
+3. Click **Yes** when asked to run built-in uninstaller (if available)
+4. BCU automatically scans for junk
+5. Review and remove leftovers
+
+### Standalone Junk Scan
+
+Scan for leftover junk without uninstalling:
+
+1. Select applications that are already uninstalled (marked as invalid)
+2. Choose **Advanced Operations > Manual Uninstall**
+3. BCU scans for remaining traces
+4. Remove confirmed junk
+
+### Program Files Cleanup
+
+Find orphaned folders in Program Files:
+
+1. Go to **Tools > Clean Program Files**
+2. BCU scans Program Files and Program Files (x86)
+3. Identifies folders with no matching installed application
+4. Review and remove orphaned folders
+
+<Note>
+This scan can take several minutes depending on the number of folders in Program Files.
+</Note>
+
+## Junk Scan Process
+
+When you initiate a junk scan:
+
+<Steps>
+  <Step title="Scanning">
+    BCU analyzes multiple locations:
+    
+    - **Registry** - HKLM and HKCU hives for application traces
+    - **File system** - Install locations, user folders, AppData, ProgramData
+    - **Startup items** - Services, tasks, Run keys, startup folders
+    - **Shortcuts** - All user profile locations
+    - **Related entries** - Items connected to the application
+    
+    A progress dialog shows:
+    - Current application being processed
+    - Total progress (when scanning multiple applications)
+    - Sub-progress for current scan operation
+    - Application name and status
+    
+    <Tip>
+    Press the Cancel button if the scan takes too long or finds unexpected items.
+    </Tip>
+  </Step>
+  
+  <Step title="Analysis">
+    Each found item is analyzed and assigned a confidence level based on:
+    
+    - Location relevance
+    - Name similarity to uninstalled application
+    - Publisher information
+    - Modification dates
+    - File signatures
+    - Registry key structure
+    - Presence of related items
+  </Step>
+  
+  <Step title="Review">
+    The Junk Removal window displays all findings:
+    
+    - Organized by confidence level
+    - Colored indicators for safety
+    - Detailed information for each item
+    - Pre-selected based on confidence
+    - Options to adjust selection
+  </Step>
+  
+  <Step title="Removal">
+    After confirming your selection:
+    
+    - Optional backup creation
+    - Items removed in safe order
+    - Progress indication
+    - Error handling for locked files
+    - Summary of results
+  </Step>
+</Steps>
+
+## Understanding Confidence Levels
+
+Each junk item is assigned a confidence level indicating how safe it is to remove:
+
+### Very Good (Dark Green)
+
+- Highly certain to be related to the uninstalled application
+- Safe to remove without risk
+- Examples:
+  - Application's main installation folder
+  - Registry keys in the application's own hive
+  - Shortcuts explicitly pointing to the application
+  - Services registered by the application
+
+### Good (Green)
+
+- Very likely related to the application
+- Generally safe to remove
+- Examples:
+  - Folders with the application's name in AppData
+  - Registry keys with publisher and product name
+  - User configuration files in standard locations
+  - Application-specific temp files
+
+### Questionable (Orange)
+
+- Possibly related but uncertain
+- Review carefully before removing
+- Examples:
+  - Folders with similar names
+  - Registry keys with partial name matches
+  - Shared folders with application traces
+  - Generic configuration files
+
+<Warning>
+Questionable items are hidden by default. Enable "Show questionable and bad confidence items" to see them.
+</Warning>
+
+### Bad (Red)
+
+- Uncertain or potentially shared with other applications
+- High risk - removal may affect other software
+- Examples:
+  - System folders with application files mixed in
+  - Shared registry keys
+  - DLLs in Windows directories
+  - Generic paths with common names
+
+<Warning>
+Bad confidence items are hidden by default and should only be removed if you're certain they're safe.
+</Warning>
+
+## Junk Removal Window
+
+The junk removal interface provides detailed control:
+
+### Main List
+
+Displays all found junk items:
+
+- **Checkbox** - Select items to remove
+- **Path/Name** - Full path to file or registry key
+- **Safety Level** - Confidence level with color coding
+- **Application** - Which uninstalled application it relates to
+
+### Selection Controls
+
+**Quick Selection Dropdown:**
+- **Select Very Good** - Only safest items
+- **Select up to Good** - Very Good + Good (recommended)
+- **Select up to Questionable** - Include uncertain items
+- **Select up to Bad** - Everything (not recommended)
+
+**Manual Selection:**
+- Check/uncheck individual items
+- Ctrl+Click to select multiple items
+- Right-click for context menu
+
+### Filter Options
+
+**Hide low confidence:**
+- Checked (default) - Hide Questionable and Bad items
+- Unchecked - Show all items regardless of confidence
+
+<Note>
+When you uncheck "Hide low confidence," a warning appears. Only proceed if you understand the risks.
+</Note>
+
+### Item Details
+
+For each selected item, you can:
+
+- **Open** - View the file or navigate to registry key
+- **View Details** - See why the item was flagged:
+  - Positive factors (increasing confidence)
+  - Negative factors (decreasing confidence)
+  - Net confidence score
+- **Copy to Clipboard** - Copy full path for manual inspection
+
+### Grouping
+
+Items are automatically grouped by:
+- **Application Name** - Which uninstalled application
+- **Type** - Registry, Files, Shortcuts, Startup items
+
+Expand/collapse groups to organize your review.
+
+## Backup Before Removal
+
+Protect yourself by creating backups:
+
+### Automatic Backup Prompt
+
+When removing registry-based junk:
+
+1. BCU asks: "Create a backup?"
+2. Options:
+   - **Yes** - Choose backup location
+   - **No** - Skip backup (not recommended)
+   - **Cancel** - Return to junk window
+
+### Backup Location
+
+Configure default backup location:
+
+1. Go to **Settings > Uninstall > Leftover backup**
+2. Choose backup option:
+   - **Ask every time** - Prompt for each operation
+   - **Automatic** - Use configured folder
+   - **Never** - Don't create backups (risky)
+3. Set backup directory path
+
+### Backup Contents
+
+Backups include:
+
+- **Registry exports** - .reg files for all removed registry keys
+- **File snapshots** - Compressed archive of removed files
+- **Metadata** - List of removed items with timestamps
+
+Backup folder format: `BCU Backup YYYY-MM-DD_HH-MM-SS`
+
+<Tip>
+Keep backups for at least a week after junk removal in case you need to restore something.
+</Tip>
+
+## Removal Process
+
+Once you confirm removal:
+
+<Steps>
+  <Step title="Pre-Check">
+    BCU verifies:
+    - No related processes are running
+    - Files are not locked
+    - Administrator privileges if needed
+    
+    If processes are found, you can:
+    - Close them manually
+    - Allow BCU to terminate them
+    - Cancel the operation
+  </Step>
+  
+  <Step title="Backup Creation">
+    If enabled, creates backup of:
+    - Registry entries (exported to .reg files)
+    - Files and folders (compressed archive)
+    - Saved to configured backup location
+  </Step>
+  
+  <Step title="Removal">
+    Items removed in safe order:
+    1. **Commands** - Run process junk (unregister services, etc.)
+    2. **Startup items** - Remove autostart entries
+    3. **Registry keys** - Delete orphaned registry entries
+    4. **Files** - Delete files and folders
+    5. **Shortcuts** - Remove desktop and menu shortcuts
+    
+    Progress bar shows current item and overall progress.
+  </Step>
+  
+  <Step title="Completion">
+    Summary displays:
+    - Number of items removed
+    - Any errors encountered
+    - Location of backup (if created)
+    - Option to view removal log
+  </Step>
+</Steps>
+
+## Advanced Junk Scanning
+
+### Scan Settings
+
+Configure junk detection behavior:
+
+**Settings > Junk Removal:**
+
+- **Scan drives** - Check file system for leftover files
+- **Scan registry** - Check Windows Registry for orphaned keys
+- **Scan predefined** - Use built-in junk definitions
+- **Scan Steam** - Include Steam game leftovers
+- **Scan Chocolatey** - Check Chocolatey package cache
+- **Scan Scoop** - Check Scoop app cache
+
+### Custom Program Files
+
+Add non-standard installation locations:
+
+1. Go to **Settings > Folders**
+2. Enable **Auto-detect program folders**
+3. Or manually add custom paths
+4. BCU scans these locations for junk
+
+### Orphan Detection
+
+Find applications with broken uninstaller entries:
+
+1. Enable **Settings > Advanced > Display orphaned**
+2. Orphaned applications appear in purple
+3. These indicate:
+   - Uninstaller file missing
+   - Invalid uninstaller path
+   - Registry-only entries
+4. Use Manual Uninstall to remove completely
+
+## Safety Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Always Create Backups" icon="floppy-disk">
+    Enable automatic backups or at least accept the backup prompt. Registry mistakes can be difficult to fix without a backup.
+  </Card>
+  
+  <Card title="Start Conservative" icon="shield-halved">
+    Begin by only removing "Very Good" and "Good" confidence items. Review results before attempting lower confidence items.
+  </Card>
+  
+  <Card title="Review Before Removing" icon="magnifying-glass">
+    Double-check items before removal, especially:
+    - Folders in system directories
+    - Registry keys with generic names
+    - Items related to multiple applications
+  </Card>
+  
+  <Card title="Check Item Details" icon="circle-info">
+    Use the "Details" option to understand why an item was flagged and what factors affected its confidence level.
+  </Card>
+  
+  <Card title="Close Related Applications" icon="xmark">
+    Ensure no applications are using the files being removed. BCU will warn you, but it's better to close them first.
+  </Card>
+  
+  <Card title="Keep Backups Temporarily" icon="clock">
+    Don't delete backup folders for at least 1-2 weeks after removal in case you need to restore something.
+  </Card>
+</CardGroup>
+
+## Restoring from Backup
+
+If you need to restore removed items:
+
+### Registry Restoration
+
+1. Navigate to the backup folder
+2. Find the .reg files
+3. Double-click to import back into registry
+4. Confirm the UAC prompt
+5. Registry keys are restored
+
+### File Restoration
+
+1. Open the backup folder
+2. Extract files from the compressed archive
+3. Copy files back to their original locations
+4. May require administrator privileges
+
+<Warning>
+Manual restoration can be complex. If you're unsure, seek help before removing items.
+</Warning>
+
+## Troubleshooting
+
+### Scan Takes Too Long
+
+- Reduce scan scope (disable drive scanning)
+- Scan fewer applications at once
+- Check antivirus isn't interfering
+- Close other applications
+
+### Items Won't Delete
+
+- Files may be locked by running processes
+- Check for hidden applications or services
+- Restart Windows and try again
+- Use Windows Safe Mode for stubborn files
+
+### False Positives
+
+- Some shared components may be flagged
+- Check confidence level before removing
+- When in doubt, skip the item
+- Search online if unsure about a file/registry key
+
+### Missing Expected Junk
+
+- Application may have cleaned up properly
+- Files may be in non-standard locations
+- Try Program Files cleanup separately
+- Enable "Show all bad junk" in settings
+
+## Export Junk Results
+
+Save the junk scan results:
+
+1. Click **Export** in the junk window
+2. Choose a filename and location
+3. Results saved as text file with:
+   - Full path of each item
+   - Confidence level
+   - Associated application
+   - Scan timestamp
+
+Useful for:
+- Documentation
+- Reviewing later
+- Sharing with support
+- Creating removal scripts

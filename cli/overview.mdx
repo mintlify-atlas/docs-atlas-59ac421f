@@ -1,0 +1,206 @@
+---
+title: CLI Overview
+description: Introduction to BCU-console, the command-line interface for Bulk Crap Uninstaller
+---
+
+## What is BCU-console?
+
+BCU-console is the command-line interface for Bulk Crap Uninstaller, enabling automated and scriptable management of Windows applications. It provides powerful uninstall capabilities that can be integrated into deployment pipelines, system maintenance scripts, and IT automation workflows.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Batch Uninstallation" icon="trash">
+    Uninstall multiple applications at once using predefined uninstall lists (.bcul files)
+  </Card>
+  <Card title="Application Export" icon="file-export">
+    Export comprehensive application data to XML format for inventory management
+  </Card>
+  <Card title="List Applications" icon="list">
+    Display all installed applications with version and source information
+  </Card>
+  <Card title="Junk Cleanup" icon="broom">
+    Automatically remove leftover registry entries and files after uninstallation
+  </Card>
+  <Card title="Quiet Mode" icon="volume-off">
+    Use silent uninstallers wherever possible for unattended operations
+  </Card>
+  <Card title="Automation Ready" icon="robot">
+    Fully scriptable with exit codes for integration into automation workflows
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+### System Administration
+
+Automatically remove unwanted software across multiple machines in an enterprise environment:
+
+```bash
+BCU-console uninstall C:\Scripts\bloatware.bcul /U /Q
+```
+
+### Software Deployment
+
+Clean up old versions before deploying new software:
+
+```bash
+BCU-console uninstall C:\Deploy\old-versions.bcul /Q /J=VeryGood
+```
+
+### Inventory Management
+
+Export application data for compliance auditing and license management:
+
+```bash
+BCU-console export C:\Inventory\%COMPUTERNAME%-apps.xml
+```
+
+### Automated Maintenance
+
+Schedule regular cleanup tasks using Windows Task Scheduler:
+
+```bash
+BCU-console uninstall C:\Maintenance\cleanup.bcul /U /Q /V
+```
+
+## Basic Usage
+
+BCU-console follows a simple command structure:
+
+```bash
+BCU-console <command> [arguments] [switches]
+```
+
+### Getting Help
+
+Display the help screen with all available commands and switches:
+
+```bash
+BCU-console help
+```
+
+or
+
+```bash
+BCU-console /?
+```
+
+### Available Commands
+
+<CardGroup cols={3}>
+  <Card title="uninstall" icon="trash" href="/cli/commands#uninstall">
+    Uninstall applications using a .bcul list file
+  </Card>
+  <Card title="export" icon="file-export" href="/cli/commands#export">
+    Export installed application data to XML
+  </Card>
+  <Card title="list" icon="list" href="/cli/commands#list">
+    Display all installed applications
+  </Card>
+</CardGroup>
+
+## Quick Start Example
+
+<Steps>
+  <Step title="List installed applications">
+    First, view what's currently installed on your system:
+    
+    ```bash
+    BCU-console list
+    ```
+  </Step>
+  
+  <Step title="Create an uninstall list">
+    Use the GUI version of BCU to create a .bcul uninstall list file by selecting target applications and using File > Save selection.
+  </Step>
+  
+  <Step title="Test the uninstall">
+    Run the uninstall command without the /U flag to review what will be uninstalled:
+    
+    ```bash
+    BCU-console uninstall C:\Lists\myapps.bcul
+    ```
+  </Step>
+  
+  <Step title="Execute unattended">
+    Once verified, run the uninstall in unattended mode:
+    
+    ```bash
+    BCU-console uninstall C:\Lists\myapps.bcul /U /Q
+    ```
+  </Step>
+</Steps>
+
+## Return Codes
+
+BCU-console uses standard Windows return codes for automation and error handling:
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| `0` | Success | The operation completed successfully |
+| `1` | Invalid arguments | Command syntax error or invalid parameters |
+| `13` | Unexpected error | An unhandled system exception occurred |
+| `87` | Invalid syntax | Missing required arguments or invalid file path |
+| `1223` | Cancelled | The operation was cancelled by the user |
+
+### Checking Return Codes in Scripts
+
+<CodeGroup>
+
+```batch Batch Script
+BCU-console uninstall C:\Lists\apps.bcul /U /Q
+IF %ERRORLEVEL% EQU 0 (
+    ECHO Uninstall completed successfully
+) ELSE (
+    ECHO Uninstall failed with error code %ERRORLEVEL%
+    EXIT /B %ERRORLEVEL%
+)
+```
+
+```powershell PowerShell
+$result = Start-Process -FilePath "BCU-console" -ArgumentList "uninstall","C:\Lists\apps.bcul","/U","/Q" -Wait -PassThru -NoNewWindow
+if ($result.ExitCode -eq 0) {
+    Write-Host "Uninstall completed successfully"
+} else {
+    Write-Error "Uninstall failed with error code $($result.ExitCode)"
+    exit $result.ExitCode
+}
+```
+
+</CodeGroup>
+
+## Important Warnings
+
+<Warning>
+**Use Unattended Mode with Caution**
+
+The `/U` (unattended) flag bypasses all user confirmation prompts. Always test your uninstall lists thoroughly before using unattended mode. Uninstall lists should be as specific as possible to avoid false positives.
+
+**There are no warranties. Use with extreme caution.**
+</Warning>
+
+<Warning>
+**Junk Cleanup Risk Levels**
+
+The `/J` (junk cleanup) flag will permanently delete registry entries and files. Only use confidence levels below "VeryGood" if you fully understand the risks:
+
+- **VeryGood**: Safest option, only removes clearly identified leftovers (recommended)
+- **Good**: Removes items with high confidence
+- **Questionable**: May remove items that could still be in use
+- **Bad**: High risk of removing important data
+- **Unknown**: Extreme risk, not recommended
+
+**There are no warranties. Use extreme caution.**
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="All Commands" icon="terminal" href="/cli/commands">
+    Complete command reference with all flags and parameters
+  </Card>
+  <Card title="Scripting Examples" icon="code" href="/cli/scripting">
+    Real-world automation scenarios and script templates
+  </Card>
+</CardGroup>

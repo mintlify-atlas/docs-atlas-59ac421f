@@ -1,0 +1,488 @@
+---
+title: Quiet & Unattended Mode
+description: Silent uninstallation capabilities for automation and hands-free operation
+---
+
+## Overview
+
+BCU supports quiet (silent) and unattended uninstallation modes that minimize or eliminate user interaction during the uninstall process. This is essential for automation, scripting, and batch operations where manual intervention is impractical.
+
+## Quiet Uninstall Detection
+
+BCU automatically detects if an application supports quiet uninstallation:
+
+```csharp
+[LocalisedName(typeof(Localisation), nameof(Localisation.QuietUninstallPossible))]
+public bool QuietUninstallPossible => 
+    !string.IsNullOrEmpty(QuietUninstallString) ||
+    (UninstallerKind == UninstallerType.Msiexec &&
+     BundleProviderKey != Guid.Empty);
+```
+
+<CardGroup cols={2}>
+  <Card title="Explicit Support" icon="check">
+    Application has a QuietUninstallString in registry
+  </Card>
+  <Card title="MSI Packages" icon="windows">
+    All Windows Installer packages support silent mode
+  </Card>
+  <Card title="Generated Parameters" icon="wand-magic-sparkles">
+    BCU generates silent switches for known installer types
+  </Card>
+  <Card title="User-Defined" icon="user">
+    Custom quiet uninstall strings can be manually specified
+  </Card>
+</CardGroup>
+
+## Quiet Uninstall String Sources
+
+<Tabs>
+  <Tab title="Registry">
+    Applications may specify a quiet uninstall command in the registry:
+
+    ```csharp
+    private static string GetQuietUninstallString(RegistryKey uninstallerKey)
+    {
+        return uninstallerKey.GetStringSafe(RegistryNameQuietUninstallString);
+    }
+    ```
+
+    **Registry Location**: `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\{AppKey}\QuietUninstallString`
+  </Tab>
+  <Tab title="Auto-Generated">
+    BCU generates quiet commands for known installer types:
+
+    **NSIS Installers**:
+    ```bash
+    "C:\Program Files\App\uninstall.exe" /S
+    ```
+
+    **Inno Setup**:
+    ```bash
+    "C:\Program Files\App\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+    ```
+
+    **MSI Packages**:
+    ```bash
+    msiexec.exe /x {GUID} /qn /norestart
+    ```
+
+    **Windows Store Apps**:
+    ```powershell
+    Remove-AppxPackage -package {FullName} -confirm:$false
+    ```
+  </Tab>
+  <Tab title="Info Adders">
+    Specialized generators create quiet uninstall strings:
+
+    ```csharp
+    public class InnoSetupQuietUninstallStringGenerator : IMissingInfoAdder
+    {
+        public void AddMissingInformation(ApplicationUninstallerEntry target)
+        {
+            if (target.UninstallerKind != UninstallerType.InnoSetup)
+                return;
+                
+            if (string.IsNullOrEmpty(target.QuietUninstallString) &&
+                !string.IsNullOrEmpty(target.UninstallString))
+            {
+                target.QuietUninstallString = target.UninstallString + 
+                    " /VERYSILENT /SUPPRESSMSGBOXES /NORESTART";
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Running Quiet Uninstalls
+
+### Bulk Operations
+
+When running bulk uninstalls, BCU automatically uses quiet mode when available:
+
+```csharp
+public void RunUninstaller(RunUninstallerOptions options)
+{
+    var uninstallString = IsSilentPossible && UninstallerEntry.QuietUninstallPossible
+        ? UninstallerEntry.QuietUninstallString
+        : UninstallerEntry.UninstallString;
+
+    using (var uninstaller = UninstallerEntry.RunUninstaller(
+        options.PreferQuiet, options.Simulate, _canRetry))
+    {
+        if (options.PreferQuiet && UninstallerEntry.QuietUninstallPossible)
+        {
+            try
+            {
+                // Lower priority for background operation
+                uninstaller.PriorityClass = ProcessPriorityClass.BelowNormal;
+            }
+            catch { }
+        }
+        
+        // Wait for completion
+        // ...
+    }
+}
+```
+
+### Command Line
+
+BCU can be automated via command line:
+
+```bash
+# Uninstall specific application quietly
+BCUninstaller.exe /uninstall "Application Name" /quiet
+
+# Batch uninstall from list
+BCUninstaller.exe /uninstall-list "apps.bcul" /quiet /auto
+```
+
+<Warning>
+Quiet mode bypasses user prompts. Ensure you've reviewed what will be uninstalled before using automated modes.
+</Warning>
+
+## Automation Features
+
+<Accordion title="Stuck Process Detection">
+Quiet uninstallers can hang without user notification. BCU monitors for stuck processes:
+
+```csharp
+private bool TestUninstallerForStalls(IEnumerable<string> childProcesses)
+{
+    // Create performance counters for CPU and I/O
+    foreach (var childProcessName in childProcessNames)
+    {
+        var perfCounters = new[]
+        {
+            new PerformanceCounter("Process", "% Processor Time", childProcessName),
+            new PerformanceCounter("Process", "IO Data Bytes/sec", childProcessName)
+        };
+        _perfCounterBuffer.Add(childProcessName, new PerfCounterEntry(perfCounters));
+    }
+
+    // Wait to gather data
+    Thread.Sleep(1100);
+
+    // Check if any process is active
+    foreach (var perfCounterEntry in _perfCounterBuffer)
+    {
+        var cpuUsage = CalculateCpuUsage(perfCounterEntry);
+        var ioUsage = CalculateIoUsage(perfCounterEntry);
+
+        // Check if process seems to be doing anything
+        // Use 1% for CPU and 10KB for I/O
+        if (cpuUsage <= 1 && ioUsage <= 10240)
+        {
+            return true; // Process is stalled
+        }
+    }
+    
+    return false;
+}
+```
+
+**Stall Criteria**:
+- CPU usage ≤ 1%
+- I/O activity ≤ 10KB/sec
+- Detected for 30+ consecutive checks
+
+**Auto-Kill**: `idleCounter > 30` triggers automatic termination
+</Accordion>
+
+<Accordion title="Automatic Retry">
+Failed quiet uninstalls can retry with interactive mode:
+
+```csharp
+if (error != null)
+{
+    if (options.RetryFailedQuiet || 
+        (UninstallerEntry.UninstallerKind == UninstallerType.Nsis && 
+         !options.PreferQuiet))
+    {
+        retry = true;
+        throw new IOException(
+            Localisation.UninstallError_UninstallerReturnedCode + exitVar);
+    }
+}
+
+if (retry && _canRetry)
+{
+    CurrentStatus = UninstallStatus.Waiting;
+    _canRetry = false;  // Only retry once
+}
+else
+{
+    Finished = true;
+}
+```
+
+**Retry Behavior**:
+- First attempt: Quiet mode
+- On failure: Retry with interactive mode
+- Only retries once per application
+</Accordion>
+
+<Accordion title="Exit Code Handling">
+BCU interprets uninstaller exit codes:
+
+```csharp
+var exitVar = uninstaller.ExitCode;
+if (exitVar != 0)
+{
+    if (UninstallerEntry.UninstallerKind == UninstallerType.Msiexec &&
+        exitVar == 1602)
+    {
+        // 1602 ERROR_INSTALL_USEREXIT - User cancelled
+        _skipLevel = SkipCurrentLevel.Skip;
+    }
+    else if (UninstallerEntry.UninstallerKind == UninstallerType.Nsis &&
+             (exitVar == 1 || exitVar == 2))
+    {
+        // 1 - Installation aborted by user
+        // 2 - Installation aborted by script
+        _skipLevel = SkipCurrentLevel.Skip;
+    }
+    else if (exitVar == -1073741510)
+    {
+        // 0xC000013A - Terminated by CTRL+C
+        _skipLevel = SkipCurrentLevel.Terminate;
+    }
+    else
+    {
+        switch (exitVar)
+        {
+            case 2:
+                throw new Exception("The system cannot find the file specified.");
+            case 3:
+                throw new Exception("The system cannot find the path specified.");
+            case 5:
+                throw new Exception("Access is denied.");
+            case 9009:
+                throw new Exception("Program is not recognized as an internal or external command.");
+            default:
+                if (options.RetryFailedQuiet)
+                    retry = true;
+                throw new IOException(
+                    Localisation.UninstallError_UninstallerReturnedCode + exitVar);
+        }
+    }
+}
+```
+</Accordion>
+
+<Accordion title="Process Chain Tracking">
+BCU monitors the entire process tree:
+
+```csharp
+var watchedProcesses = new List<Process> { uninstaller };
+int[] previousWatchedProcessIds = { };
+
+while (true)
+{
+    // Add all child processes
+    foreach (var watchedProcess in watchedProcesses.ToList())
+        watchedProcesses.AddRange(watchedProcess.GetChildProcesses());
+
+    // For MSI, also track msiexec
+    if (UninstallerEntry.UninstallerKind == UninstallerType.Msiexec)
+    {
+        foreach (var msiProcess in Process.GetProcessesByName("msiexec"))
+            watchedProcesses.AddRange(msiProcess.GetChildProcesses());
+    }
+
+    watchedProcesses = CleanupDeadProcesses(watchedProcesses).ToList();
+
+    // Check if we are done
+    if (watchedProcesses.Count == 0)
+        break;
+        
+    // Continue monitoring...
+}
+```
+</Accordion>
+
+## Quiet Uninstall Daemon
+
+For enhanced automation, BCU includes a daemon that can assist with interactive installers:
+
+<Note>
+**Experimental Feature**: The Quiet Uninstall Daemon attempts to automatically answer common uninstaller dialogs. This feature is experimental and may not work with all uninstallers.
+</Note>
+
+```csharp
+if (IsSilentPossible && UninstallToolsGlobalConfig.UseQuietUninstallDaemon && _canRetry)
+{
+    // Don't try to automatize CLI programs or our own helpers
+    if (!UninstallerEntry.QuietUninstallerIsCLI() && 
+        !UninstallerEntry.QuietUninstallString.Contains(
+            UninstallToolsGlobalConfig.AppLocation, 
+            StringComparison.OrdinalIgnoreCase))
+    {
+        var processIds = SafeGetProcessIds(watchedProcesses).ToArray();
+        options.Owner.SendProcessesToWatchToDeamon(
+            processIds.Except(previousWatchedProcessIds));
+    }
+}
+```
+
+## Configuration Options
+
+<CardGroup cols={2}>
+  <Card title="Prefer Quiet" icon="volume-off">
+    Use quiet mode when available during bulk operations
+  </Card>
+  <Card title="Auto-Kill Stuck" icon="skull">
+    Automatically terminate uninstallers that appear stuck
+  </Card>
+  <Card title="Retry Failed" icon="rotate">
+    Retry failed quiet uninstalls in interactive mode
+  </Card>
+  <Card title="Concurrent Limit" icon="layer-group">
+    Maximum number of simultaneous quiet uninstallers
+  </Card>
+</CardGroup>
+
+### Settings
+
+```csharp
+private BulkUninstallConfiguration GetConfiguration(bool quiet)
+{
+    return new BulkUninstallConfiguration(
+        _settings.AdvancedDisableProtection,
+        quiet,  // Prefer quiet mode
+        _settings.AdvancedSimulate,
+        _settings.QuietAutoKillStuck,  // Auto-kill stuck uninstallers
+        _settings.QuietRetryFailedOnce  // Retry failed once
+    );
+}
+```
+
+## Process Priority Management
+
+Quiet uninstallers run at lower priority to minimize system impact:
+
+```csharp
+if (options.PreferQuiet && UninstallerEntry.QuietUninstallPossible)
+{
+    try
+    {
+        uninstaller.PriorityClass = ProcessPriorityClass.BelowNormal;
+    }
+    catch
+    {
+        // Don't care if setting this fails
+    }
+}
+```
+
+<Note>
+**Resource Management**: Background uninstallers are deprioritized so you can continue working while the batch operation completes.
+</Note>
+
+## Common Silent Switches
+
+Different installer types use different silent switches:
+
+<Tabs>
+  <Tab title="Windows Installer (MSI)">
+    ```bash
+    # Silent uninstall
+    msiexec.exe /x {ProductGUID} /qn
+
+    # Silent with no restart
+    msiexec.exe /x {ProductGUID} /qn /norestart
+
+    # Passive (progress bar, no interaction)
+    msiexec.exe /x {ProductGUID} /qb
+    ```
+
+    **Parameters**:
+    - `/x`: Uninstall
+    - `/qn`: No UI
+    - `/qb`: Basic UI (progress only)
+    - `/norestart`: Suppress restart prompts
+  </Tab>
+  <Tab title="NSIS">
+    ```bash
+    # Silent uninstall
+    uninstall.exe /S
+
+    # Silent with custom install directory
+    uninstall.exe /S /D=C:\Program Files\App
+    ```
+
+    **Parameters**:
+    - `/S`: Silent mode (capital S)
+    - `/D=path`: Installation directory (must be last)
+  </Tab>
+  <Tab title="Inno Setup">
+    ```bash
+    # Very silent (no UI at all)
+    unins000.exe /VERYSILENT
+
+    # Silent with no message boxes
+    unins000.exe /SILENT /SUPPRESSMSGBOXES
+
+    # Complete silent uninstall
+    unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+    ```
+
+    **Parameters**:
+    - `/SILENT`: Silent with progress window
+    - `/VERYSILENT`: No UI at all
+    - `/SUPPRESSMSGBOXES`: No message boxes
+    - `/NORESTART`: Suppress restart
+  </Tab>
+  <Tab title="InstallShield">
+    ```bash
+    # Silent uninstall
+    setup.exe /s /x
+
+    # Silent with response file
+    setup.exe /s /f1"C:\path\to\setup.iss"
+
+    # Complete silent
+    setup.exe /s /x /v"/qn"
+    ```
+
+    **Parameters**:
+    - `/s`: Silent mode
+    - `/x`: Uninstall
+    - `/v`: Pass parameters to MSI
+    - `/f1`: Response file path
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Test First" icon="flask">
+    Test quiet uninstalls on non-critical systems before automating
+  </Card>
+  <Card title="Enable Monitoring" icon="eye">
+    Keep auto-kill and retry options enabled for reliable automation
+  </Card>
+  <Card title="Set Reasonable Limits" icon="sliders">
+    Don't run too many concurrent uninstallers (3-5 is optimal)
+  </Card>
+  <Card title="Review Logs" icon="file-lines">
+    Check logs after batch operations to catch failures
+  </Card>
+</CardGroup>
+
+<Warning>
+**Administrator Rights**: Many uninstallers require administrator privileges. Run BCU as administrator for full automation support.
+</Warning>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bulk Uninstall" href="/features/bulk-uninstall" icon="list-check">
+    Learn about bulk uninstallation operations
+  </Card>
+  <Card title="Application Detection" href="/features/application-detection" icon="magnifying-glass">
+    How BCU detects quiet uninstall capabilities
+  </Card>
+</CardGroup>

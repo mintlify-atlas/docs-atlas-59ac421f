@@ -1,0 +1,308 @@
+---
+title: "Frequently Asked Questions"
+description: "Common questions about Bulk Crap Uninstaller"
+---
+
+## General Questions
+
+<AccordionGroup>
+  <Accordion title="What is Bulk Crap Uninstaller?">
+    Bulk Crap Uninstaller (BCU) is a free, open-source program uninstaller that excels at removing large amounts of applications with minimal user input. It can:
+    
+    - Clean up leftover files and registry entries
+    - Detect orphaned applications
+    - Run uninstallers according to premade lists
+    - Handle Windows Store Apps, Steam games, and Windows Features
+    - Support multiple uninstalling systems (NSIS, InnoSetup, Msiexec, etc.)
+    
+    BCU is licensed under Apache 2.0 and can be used in both private and commercial settings for free.
+  </Accordion>
+
+  <Accordion title="Is Bulk Crap Uninstaller safe to use?">
+    Yes, BCU is completely safe. It is:
+    
+    - **Open source** - The code is publicly available on [GitHub](https://github.com/Klocman/Bulk-Crap-Uninstaller)
+    - **Well-established** - Trusted by IT professionals and home users worldwide
+    - **Non-destructive** - Shows you what will be removed before taking action
+    - **Apache 2.0 licensed** - Professional open-source license
+    
+    However, as with any uninstaller, you should always review what you're removing to avoid accidentally uninstalling important software.
+    
+    <Warning>Always create a system restore point before performing bulk uninstalls, especially on production systems.</Warning>
+  </Accordion>
+
+  <Accordion title="Is BCUninstaller really free?">
+    Yes, absolutely! BCU is:
+    
+    - **Free as in speech** - Open-source software
+    - **Free as in beer** - No cost for personal or commercial use
+    - **No hidden fees** - No premium features or paid upgrades
+    - **No ads** - Clean, professional interface
+    
+    You can use BCU in any setting without obligations, as long as you comply with the Apache 2.0 license conditions.
+  </Accordion>
+
+  <Accordion title="Who should use BCUninstaller?">
+    BCU was made with IT professionals in mind, but can be used by anyone with a basic understanding of how applications are installed and uninstalled in Windows.
+    
+    **Ideal for:**
+    - IT administrators managing multiple machines
+    - System cleaners removing bloatware
+    - Power users optimizing their systems
+    - Anyone who needs to uninstall many programs at once
+    
+    If you're comfortable with standard Windows uninstall procedures, you'll be comfortable with BCU.
+  </Accordion>
+</AccordionGroup>
+
+## Installation & Requirements
+
+<AccordionGroup>
+  <Accordion title="What are the system requirements?">
+    Requirements vary by BCU version:
+    
+    **BCUninstaller v6 (Latest):**
+    - Windows 10 or later (may work on Windows 7)
+    - .NET 8 desktop runtime (not needed for portable version)
+    
+    **BCUninstaller v5:**
+    - Windows 7 SP1 with Platform Updates (KB2670838, KB2533623)
+    - .NET 6 desktop runtime (not needed for portable version)
+    
+    **BCUninstaller v1-v4 (Legacy):**
+    - Windows XP or later
+    - .NET Framework 4.5 with updates
+    
+    <Note>The Portable version includes the required runtime, making it ideal for systems where you can't or don't want to install .NET separately.</Note>
+  </Accordion>
+
+  <Accordion title="Which version should I download?">
+    BCU offers three variants:
+    
+    **Setup** - Recommended for most users
+    - Installs BCU as a normal application
+    - Automatically installs .NET runtime if missing
+    - Creates Start Menu shortcuts
+    - Smaller download size
+    
+    **Portable** - For advanced users or USB drives
+    - Self-contained, includes .NET runtime
+    - No installation required
+    - Can run from USB or network drives
+    - Larger file size due to bundled runtime
+    
+    **net** - For systems with .NET already installed
+    - Stand-alone portable version
+    - Requires .NET runtime pre-installed
+    - Much smaller file size
+    - No installation needed
+  </Accordion>
+
+  <Accordion title="Can I run BCU on Windows XP?">
+    Only older versions (v1-v4) support Windows XP, though support may be limited in later 4.x releases.
+    
+    To use BCU on Windows XP:
+    1. Download [BCU v4.16](https://github.com/Klocman/Bulk-Crap-Uninstaller/releases/tag/v4.16)
+    2. Ensure .NET Framework 4.5 is installed
+    3. Install all available Windows updates
+    
+    <Warning>Windows XP is no longer supported by Microsoft. Consider upgrading to a modern operating system for security and compatibility.</Warning>
+  </Accordion>
+
+  <Accordion title="Where can I download BCUninstaller?">
+    You can download BCU from several trusted sources:
+    
+    - [GitHub Releases](https://github.com/Klocman/Bulk-Crap-Uninstaller/releases) (recommended)
+    - [FossHub](https://www.fosshub.com/Bulk-Crap-Uninstaller.html)
+    - [SourceForge](https://sourceforge.net/projects/bulk-crap-uninstaller/)
+    - [dAppCDN](https://dappcdn.com/download/utilities/bulk-crap-uninstaller)
+    
+    For the latest features and fixes, you can also download [nightly builds](https://github.com/Klocman/Bulk-Crap-Uninstaller/actions/workflows/ci.yaml) from GitHub Actions.
+  </Accordion>
+</AccordionGroup>
+
+## Features & Functionality
+
+<AccordionGroup>
+  <Accordion title="What types of applications can BCU uninstall?">
+    BCU supports a wide variety of application types:
+    
+    - **Standard Windows applications** - Programs installed via traditional installers
+    - **Windows Store Apps** - Modern UWP applications
+    - **Steam games** - Games and software from Steam
+    - **Windows Features** - Built-in Windows components
+    - **NSIS installers** - Nullsoft Scriptable Install System
+    - **InnoSetup installers** - Popular installer framework
+    - **MSI packages** - Windows Installer packages
+    - **And many more** - Special support for various installer systems
+  </Accordion>
+
+  <Accordion title="Can BCU remove leftover files and registry entries?">
+    Yes! This is one of BCU's key features. BCU can:
+    
+    - Detect and remove leftover files after uninstallation
+    - Clean up orphaned registry entries
+    - Find and remove traces of previously uninstalled programs
+    - Identify incomplete or failed uninstallations
+    
+    You can configure how aggressively BCU searches for and removes leftovers in the settings.
+  </Accordion>
+
+  <Accordion title="What are orphaned applications?">
+    Orphaned applications are entries in your system that reference programs that:
+    
+    - Were incompletely uninstalled
+    - Had their files manually deleted
+    - Were removed improperly
+    - No longer exist on your system
+    
+    BCU can detect these orphaned entries and help you clean them up, freeing up space and decluttering your system.
+  </Accordion>
+
+  <Accordion title="Can I uninstall multiple programs at once?">
+    Absolutely! Bulk uninstallation is BCU's specialty. You can:
+    
+    - Select multiple applications and uninstall them all at once
+    - Create and save lists of programs to uninstall
+    - Run uninstallers according to premade lists
+    - Minimize user input during bulk operations
+    - Set up automated uninstall procedures
+    
+    This makes BCU ideal for cleaning up bloatware or managing multiple machines.
+  </Accordion>
+
+  <Accordion title="Does BCU work with Windows Store apps?">
+    Yes, BCU is fully compatible with Windows Store Apps (UWP applications). 
+    
+    To uninstall Windows Store apps:
+    1. Ensure you're running BCU as Administrator
+    2. Windows Store apps will appear in the main application list
+    3. Select and uninstall them like any other application
+    
+    <Tip>Some system-critical Windows Store apps may be protected from removal.</Tip>
+  </Accordion>
+</AccordionGroup>
+
+## Privacy & Data
+
+<AccordionGroup>
+  <Accordion title="Does BCUninstaller collect any data?">
+    BCU collects limited, anonymous data to improve the application:
+    
+    - Anonymous usage statistics
+    - Anonymous error reports
+    - User-selected application ratings
+    
+    All collected information is not personally identifiable and does not include sensitive information. See the [Privacy Policy](/support/privacy-policy) for full details.
+  </Accordion>
+
+  <Accordion title="Can I opt out of data collection?">
+    During first start, BCU generates a user ID to help track application ratings and usage statistics. This ID:
+    
+    - Can be freely changed
+    - Is not guaranteed to be unique
+    - Does not contain personal information
+    
+    Check the application settings for options to control data collection preferences.
+  </Accordion>
+
+  <Accordion title="Who has access to the collected data?">
+    According to the privacy policy:
+    
+    **Marcin Szeniak (BCU developer) shares this information with:**
+    - No one
+    
+    The only publicly visible data is the overall application ratings, which are aggregated from all users and shown to help others make informed decisions about software quality.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="BCU won't start - what should I do?">
+    Try these steps:
+    
+    1. **Check .NET runtime** - Ensure the required runtime is installed for your BCU version
+    2. **Run Windows Update** - Install all available system updates
+    3. **Try portable version** - Download the portable version which includes the runtime
+    4. **Run as Administrator** - Right-click and select "Run as administrator"
+    5. **Check antivirus** - Ensure your security software isn't blocking BCU
+    
+    For more detailed troubleshooting, see the [Troubleshooting guide](/support/troubleshooting).
+  </Accordion>
+
+  <Accordion title="An uninstall failed - what now?">
+    If an uninstall operation fails:
+    
+    1. **Close the application** - Ensure the program you're uninstalling isn't running
+    2. **Run as Administrator** - BCU may need elevated permissions
+    3. **Try force uninstall** - Use BCU's force uninstall option for stubborn programs
+    4. **Check the logs** - Review error messages in BCU's detailed logs
+    5. **Manual removal** - As a last resort, you may need to manually remove files and registry entries
+    
+    <Warning>Force uninstall may leave some files or registry entries behind.</Warning>
+  </Accordion>
+
+  <Accordion title="Where can I get help?">
+    If you need assistance:
+    
+    - Read the [online manual](https://htmlpreview.github.io/?https://github.com/Klocman/Bulk-Crap-Uninstaller/blob/master/doc/BCU_manual.html)
+    - Check the [Troubleshooting guide](/support/troubleshooting)
+    - Search [GitHub Issues](https://github.com/Klocman/Bulk-Crap-Uninstaller/issues)
+    - Join [GitHub Discussions](https://github.com/Klocman/Bulk-Crap-Uninstaller/discussions)
+    - [Open a new issue](https://github.com/Klocman/Bulk-Crap-Uninstaller/issues/new) if your problem is unique
+  </Accordion>
+</AccordionGroup>
+
+## Contributing
+
+<AccordionGroup>
+  <Accordion title="How can I contribute to BCUninstaller?">
+    There are many ways to help:
+    
+    - **Report bugs** - [Open an issue](https://github.com/Klocman/Bulk-Crap-Uninstaller/issues/new) with details
+    - **Suggest features** - Share your ideas in GitHub Discussions
+    - **Contribute code** - Submit pull requests (see CONTRIBUTING.md)
+    - **Improve documentation** - Help make the docs clearer
+    - **Spread the word** - Tell others about BCU
+    
+    Check the [contribution notes](https://github.com/Klocman/Bulk-Crap-Uninstaller/blob/master/CONTRIBUTING.md) for detailed guidelines.
+  </Accordion>
+
+  <Accordion title="Can I compile BCU from source?">
+    Yes! BCU is open source. To compile from source:
+    
+    1. Install Visual Studio 2022 with necessary features
+    2. Clone the [GitHub repository](https://github.com/Klocman/Bulk-Crap-Uninstaller)
+    3. Open the solution and build
+    4. For installer builds, install InnoSetup v6.4 and run `publish.bat`
+    
+    The solution should load and build without additional setup.
+  </Accordion>
+
+  <Accordion title="Is the project looking for maintainers?">
+    Yes! The project is actively [looking for maintainers](https://github.com/Klocman/Bulk-Crap-Uninstaller/discussions/289).
+    
+    If you're interested in helping maintain BCU, check the discussion thread for details on how to get involved.
+  </Accordion>
+</AccordionGroup>
+
+## Still have questions?
+
+<CardGroup cols={2}>
+  <Card title="Visit the Official Site" icon="globe" href="https://www.bcuninstaller.com/">
+    See the full list of features and quirks
+  </Card>
+  
+  <Card title="Read the Manual" icon="book" href="https://htmlpreview.github.io/?https://github.com/Klocman/Bulk-Crap-Uninstaller/blob/master/doc/BCU_manual.html">
+    Comprehensive online documentation
+  </Card>
+  
+  <Card title="GitHub Issues" icon="github" href="https://github.com/Klocman/Bulk-Crap-Uninstaller/issues">
+    Search or create issues
+  </Card>
+  
+  <Card title="Troubleshooting" icon="wrench" href="/support/troubleshooting">
+    Find solutions to common problems
+  </Card>
+</CardGroup>
