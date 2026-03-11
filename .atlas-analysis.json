@@ -1,0 +1,108 @@
+{
+  "projectType": "saas",
+  "projectName": "Bulk Crap Uninstaller",
+  "projectDescription": "A powerful Windows application for removing large amounts of unwanted applications quickly and efficiently.",
+  "theme": "aspen",
+  "primaryColor": "#5f5f5f",
+  "lightColor": "#b7b7b7",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "system-requirements"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/bulk-uninstall",
+              "features/junk-cleanup",
+              "features/application-detection",
+              "features/unattended-mode",
+              "features/export-import"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guide/interface-overview",
+              "guide/selecting-applications",
+              "guide/uninstall-process",
+              "guide/junk-removal",
+              "guide/advanced-features",
+              "guide/settings-configuration"
+            ]
+          },
+          {
+            "group": "CLI Tools",
+            "pages": [
+              "cli/overview",
+              "cli/commands",
+              "cli/scripting"
+            ]
+          },
+          {
+            "group": "Support",
+            "pages": [
+              "support/troubleshooting",
+              "support/faq",
+              "support/privacy-policy"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer",
+        "groups": [
+          {
+            "group": "Development",
+            "pages": [
+              "developer/architecture",
+              "developer/building",
+              "developer/contributing",
+              "developer/translations"
+            ]
+          },
+          {
+            "group": "Technical Details",
+            "pages": [
+              "developer/uninstaller-types",
+              "developer/detection-methods",
+              "developer/helper-tools"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Bulk uninstallation of multiple applications",
+    "Automatic junk file and registry cleanup",
+    "Support for Windows Store Apps, Steam, and Windows Features",
+    "Quiet and unattended uninstall modes",
+    "Detection of orphaned and hidden applications",
+    "Command-line interface for scripting",
+    "Export and import uninstall lists",
+    "Support for NSIS, InnoSetup, MSI, and other installers"
+  ],
+  "publicApiSurface": [
+    "BCUninstaller.exe - Main GUI application",
+    "BCU-console.exe - Command-line interface",
+    "UninstallTools - Core uninstaller library",
+    "ApplicationUninstallerEntry - Application data model",
+    "ApplicationUninstallerFactory - Application detection",
+    "JunkManager - Leftover cleanup system",
+    "SteamHelper - Steam application support",
+    "StoreAppHelper - Windows Store app support",
+    "WinUpdateHelper - Windows Update integration",
+    "OculusHelper - Oculus app support",
+    "ScriptHelper - Custom script execution"
+  ]
+}
